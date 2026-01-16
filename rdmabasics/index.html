@@ -1,0 +1,241 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="RDMA Basics - Axiomatic derivation of Linux network data copies with kernel module tracing.">
+    <title>RDMA Basics | Network Copy Tracing</title>
+    <link rel="stylesheet" href="../assets/css/style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <style>
+        .back-link {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            color: var(--text-secondary);
+            text-decoration: none;
+            font-size: 0.9rem;
+            margin-bottom: 2rem;
+            transition: var(--transition);
+        }
+        .back-link:hover {
+            color: var(--accent);
+        }
+        .page-header {
+            margin-bottom: 3rem;
+            padding-bottom: 2rem;
+            border-bottom: 1px solid var(--border);
+        }
+        .page-header h1 {
+            font-size: 2.5rem;
+            margin-bottom: 1rem;
+            background: linear-gradient(135deg, var(--text-primary) 0%, var(--accent) 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        .page-header p {
+            color: var(--text-secondary);
+            font-size: 1.1rem;
+            max-width: 600px;
+        }
+        .content-section {
+            margin-bottom: 3rem;
+        }
+        .content-section h2 {
+            font-size: 1.25rem;
+            color: var(--text-primary);
+            margin-bottom: 1.5rem;
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+        .content-section h2 i {
+            color: var(--accent);
+        }
+        .doc-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 1rem;
+        }
+        .doc-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 1.25rem;
+            text-decoration: none;
+            transition: var(--transition);
+        }
+        .doc-card:hover {
+            background: var(--bg-card-hover);
+            border-color: var(--border-hover);
+            transform: translateY(-2px);
+        }
+        .doc-card h3 {
+            color: var(--text-primary);
+            font-size: 1rem;
+            margin-bottom: 0.5rem;
+        }
+        .doc-card p {
+            color: var(--text-secondary);
+            font-size: 0.85rem;
+            line-height: 1.5;
+        }
+        .code-list {
+            display: flex;
+            flex-direction: column;
+            gap: 0.75rem;
+        }
+        .code-item {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            padding: 1rem;
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 10px;
+        }
+        .code-item code {
+            font-family: 'JetBrains Mono', 'Fira Code', monospace;
+            background: var(--bg-secondary);
+            padding: 0.25rem 0.5rem;
+            border-radius: 4px;
+            font-size: 0.85rem;
+            color: var(--accent);
+            min-width: 160px;
+        }
+        .code-item span {
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+        }
+        .flow-diagram {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 2rem;
+            font-family: 'JetBrains Mono', 'Fira Code', monospace;
+            font-size: 0.85rem;
+            overflow-x: auto;
+        }
+        .flow-diagram pre {
+            color: var(--text-secondary);
+            line-height: 1.8;
+        }
+        .flow-diagram .highlight {
+            color: var(--accent);
+        }
+        .flow-diagram .addr {
+            color: #a855f7;
+        }
+        .build-section {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 1.5rem;
+        }
+        .build-section pre {
+            font-family: 'JetBrains Mono', 'Fira Code', monospace;
+            font-size: 0.85rem;
+            color: var(--text-secondary);
+            line-height: 1.8;
+        }
+        .build-section code {
+            color: var(--accent);
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <a href="../index.html" class="back-link">
+            <i class="fas fa-arrow-left"></i> Back to Portfolio
+        </a>
+
+        <header class="page-header">
+            <h1><i class="fas fa-network-wired"></i> RDMA Basics</h1>
+            <p>Axiomatic derivation of Linux network data copies. Kernel module tracing with kprobes. Zero hand-waving.</p>
+        </header>
+
+        <main>
+            <!-- Data Flow Visualization -->
+            <section class="content-section">
+                <h2><i class="fas fa-route"></i> Proven Data Flow</h2>
+                <div class="flow-diagram">
+<pre>User (sender) → <span class="highlight">COPY #1</span> → Kernel skb → <span class="highlight">COPY #4</span> → User (receiver)
+     ↓                        ↓                       ↓
+<span class="addr">0x618d9aaa3069</span>         <span class="addr">0xffff8882cbbe612c</span>      <span class="addr">0x7fff43abc810</span></pre>
+                </div>
+            </section>
+
+            <!-- Documentation -->
+            <section class="content-section">
+                <h2><i class="fas fa-book"></i> Documentation</h2>
+                <div class="doc-grid">
+                    <a href="axiomatic_derivation.md" class="doc-card">
+                        <h3>Axiomatic Derivation</h3>
+                        <p>20-step derivation from bits to double-copy proof. Every concept built from first principles.</p>
+                    </a>
+                    <a href="packet_receive_axioms.md" class="doc-card">
+                        <h3>Packet Receive Axioms</h3>
+                        <p>Packet RX flow and socket lookup proof derived from kernel source.</p>
+                    </a>
+                    <a href="worksheet.md" class="doc-card">
+                        <h3>Worksheet</h3>
+                        <p>COPY #1-#4 proofs with real machine addresses and pseudo-debugger traces.</p>
+                    </a>
+                    <a href="exercises_grilling.md" class="doc-card">
+                        <h3>Grilling Exercises</h3>
+                        <p>72 grilling questions, paradoxes, and failure predictions.</p>
+                    </a>
+                </div>
+            </section>
+
+            <!-- Code Files -->
+            <section class="content-section">
+                <h2><i class="fas fa-code"></i> Code</h2>
+                <div class="code-list">
+                    <div class="code-item">
+                        <code>sender.c</code>
+                        <span>UDP sender, prints buffer VA</span>
+                    </div>
+                    <div class="code-item">
+                        <code>receiver.c</code>
+                        <span>UDP receiver, prints buffer VA before/after recv()</span>
+                    </div>
+                    <div class="code-item">
+                        <code>send_trace_hw.c</code>
+                        <span>Kernel module, kprobe on _copy_from_iter (COPY #1)</span>
+                    </div>
+                    <div class="code-item">
+                        <code>recv_trace_hw.c</code>
+                        <span>Kernel module, kprobe on _copy_to_iter (COPY #4)</span>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Build Instructions -->
+            <section class="content-section">
+                <h2><i class="fas fa-hammer"></i> Build & Run</h2>
+                <div class="build-section">
+<pre><code>make</code>          # builds sender, receiver, kernel modules
+<code>sudo insmod send_trace_hw.ko</code>
+<code>sudo insmod recv_trace_hw.ko</code>
+<code>./receiver &</code>
+<code>./sender</code>
+<code>sudo dmesg | grep COPY</code></pre>
+                </div>
+            </section>
+        </main>
+
+        <footer>
+            <p class="footer-links">
+                <a href="https://github.com/raikrahul" target="_blank" rel="noopener noreferrer">
+                    <i class="fab fa-github"></i> GitHub
+                </a>
+            </p>
+        </footer>
+    </div>
+</body>
+
+</html>

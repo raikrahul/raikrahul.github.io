@@ -1,91 +1,175 @@
 <!DOCTYPE html>
 <html lang="en">
-
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="description"
-        content="Portfolio of Raik Rahul - Systems Software Engineer. showcasing Linux Kernel, C++, and Rust projects.">
     <title>Raik Rahul | Systems Software Engineer</title>
-    <link rel="stylesheet" href="assets/css/style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        :root {
+            --bg1: #0a0a0a; --bg2: #0f0f0f; --card: #151515; --card-h: #1a1a1a;
+            --t1: #e0e0e0; --t2: #707070; --green: #22c55e; --red: #ef4444; --border: #222;
+        }
+        body { background: var(--bg1); color: var(--t1); font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; line-height: 1.5; }
+        
+        .book { display: grid; grid-template-columns: 1fr 1fr; min-height: 100vh; }
+        .left { padding: 2.5rem; border-right: 1px solid var(--border); }
+        .right { padding: 2.5rem; background: var(--bg2); position: sticky; top: 0; height: 100vh; overflow-y: auto; }
+        
+        .avatar { width: 64px; height: 64px; border-radius: 50%; background: linear-gradient(135deg, var(--green), var(--red)); display: flex; align-items: center; justify-content: center; margin-bottom: 1rem; }
+        .avatar span { font-size: 1.4rem; font-weight: 700; color: #fff; }
+        h1 { font-size: 1.8rem; font-weight: 700; margin-bottom: 0.2rem; }
+        .title { color: var(--green); font-size: 0.9rem; font-weight: 600; margin-bottom: 0.4rem; }
+        .tagline { color: var(--t2); font-size: 0.85rem; margin-bottom: 1rem; }
+        
+        .social { display: flex; gap: 0.5rem; margin-bottom: 1.5rem; }
+        .social a { width: 34px; height: 34px; border-radius: 6px; background: var(--card); border: 1px solid var(--border); display: flex; align-items: center; justify-content: center; color: var(--t2); text-decoration: none; }
+        .social a:hover { border-color: var(--green); color: var(--green); }
+        
+        .tech { display: flex; flex-wrap: wrap; gap: 0.4rem; padding: 0.6rem; background: var(--card); border: 1px solid var(--border); border-radius: 6px; margin-bottom: 1.5rem; }
+        .tech span { font-size: 0.7rem; color: var(--t2); display: flex; align-items: center; gap: 0.3rem; padding: 0.2rem 0.4rem; }
+        .tech i { color: var(--green); }
+        
+        .label { font-size: 0.65rem; font-weight: 600; color: var(--t2); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 0.6rem; display: flex; align-items: center; gap: 0.3rem; }
+        .label i { color: var(--green); }
+        
+        .featured { margin-bottom: 1.5rem; }
+        .feat-card { display: flex; gap: 0.7rem; background: var(--card); border: 1px solid var(--border); border-left: 3px solid var(--red); border-radius: 6px; padding: 0.9rem; text-decoration: none; }
+        .feat-card:hover { background: var(--card-h); }
+        .feat-icon { width: 38px; height: 38px; border-radius: 6px; background: linear-gradient(135deg, var(--red), #f97316); display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+        .feat-icon i { color: #fff; }
+        .feat-card h3 { font-size: 0.9rem; font-weight: 600; color: var(--t1); margin-bottom: 0.2rem; }
+        .feat-card p { font-size: 0.75rem; color: var(--t2); margin-bottom: 0.4rem; }
+        .tags { display: flex; gap: 0.25rem; }
+        .tag { font-size: 0.55rem; font-weight: 600; padding: 0.12rem 0.35rem; border-radius: 3px; text-transform: uppercase; }
+        .tag-c { background: rgba(100,100,100,0.2); color: #888; }
+        .tag-g { background: rgba(34,197,94,0.15); color: var(--green); }
+        .tag-r { background: rgba(239,68,68,0.15); color: var(--red); }
+        
+        .projects { margin-bottom: 1rem; }
+        .proj-list { display: flex; flex-direction: column; gap: 0.4rem; }
+        .proj { display: flex; align-items: center; gap: 0.5rem; background: var(--card); border: 1px solid var(--border); border-radius: 5px; padding: 0.6rem; text-decoration: none; }
+        .proj:hover { background: var(--card-h); }
+        .proj-icon { width: 28px; height: 28px; border-radius: 5px; background: var(--bg2); display: flex; align-items: center; justify-content: center; }
+        .proj-icon i { color: var(--green); font-size: 0.8rem; }
+        .proj:hover .proj-icon { background: var(--green); }
+        .proj:hover .proj-icon i { color: #000; }
+        .proj h3 { font-size: 0.8rem; font-weight: 600; color: var(--t1); }
+        .proj p { font-size: 0.7rem; color: var(--t2); }
+        
+        footer { margin-top: 1rem; padding-top: 0.8rem; border-top: 1px solid var(--border); font-size: 0.7rem; color: var(--t2); }
+        footer .fa-heart { color: var(--red); }
+        
+        .right h2 { font-size: 0.65rem; font-weight: 600; color: var(--t2); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 1.2rem; display: flex; align-items: center; gap: 0.3rem; }
+        .right h2 i { color: var(--green); }
+        .graph { background: var(--card); border: 1px solid var(--border); border-radius: 6px; padding: 0.8rem; margin-bottom: 1.2rem; }
+        .graph img { width: 100%; display: block; }
+        .recent h3 { font-size: 0.6rem; font-weight: 600; color: var(--t2); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 0.6rem; display: flex; align-items: center; gap: 0.3rem; }
+        .recent h3 i { color: var(--red); }
+        .feed { display: flex; flex-direction: column; gap: 0.35rem; }
+        .act { display: flex; align-items: center; gap: 0.5rem; padding: 0.5rem; background: var(--card); border: 1px solid var(--border); border-radius: 4px; }
+        .act-icon { width: 22px; height: 22px; border-radius: 4px; background: var(--bg1); display: flex; align-items: center; justify-content: center; }
+        .act-icon i { font-size: 0.6rem; color: var(--green); }
+        .act-text { flex: 1; font-size: 0.7rem; }
+        .act-text span { color: var(--t2); }
+        .act-text a { color: var(--t1); text-decoration: none; font-weight: 500; }
+        .act-text a:hover { color: var(--green); }
+        .act-time { font-size: 0.6rem; color: var(--t2); opacity: 0.7; }
+        .loading { text-align: center; padding: 1rem; color: var(--t2); font-size: 0.75rem; }
+        .loading i { color: var(--green); }
+        
+        @media (max-width: 1024px) {
+            .book { grid-template-columns: 1fr; }
+            .left { border-right: none; border-bottom: 1px solid var(--border); }
+            .right { position: relative; height: auto; }
+        }
+    </style>
 </head>
-
 <body>
-    <div class="container">
-        <header class="profile-header">
+    <div class="book">
+        <div class="left">
+            <div class="avatar"><span>RR</span></div>
             <h1>Raik Rahul</h1>
-            <p class="subtitle">Systems Software Engineer</p>
-            <p class="bio">Exploring the depths of the Linux Kernel, low-level optimization, and algorithmic efficiency.
-            </p>
-        </header>
-
-        <main>
-            <section class="projects-grid">
-                <!-- Kernel & Systems Focus -->
-                <a href="https://raikrahul.github.io/linux_kernel_portfolio" class="project-card">
-                    <div class="card-content">
-                        <h3>Linux Kernel Portfolio</h3>
-                        <p>Comprehensive investigations into kernel subsystems, memory management, and page fault
-                            handling mechanisms.</p>
-                        <span class="tag tag-c">C</span>
-                    </div>
-                </a>
-
-                <a href="rdmabasics/axiomatic_derivation.md" class="project-card">
-                    <div class="card-content">
-                        <h3>RDMA Basics & Trace</h3>
-                        <p>Axiomatic derivation and kprobe tracing of network double-copy (User&rarr;Kernel&rarr;User).</p>
-                        <span class="tag tag-c">C/Kernel</span>
-                    </div>
-                </a>
-
-                <a href="https://github.com/raikrahul/learnlinux" class="project-card">
-                    <div class="card-content">
-                        <h3>Learn Linux</h3>
-                        <p>Deep dives into Linux internals, system calls, and operating system architecture.</p>
-                        <span class="tag tag-shell">Shell/C</span>
-                    </div>
-                </a>
-
-                <!-- Systems & Algo -->
-                <a href="https://raikrahul.github.io/modern-cpp-course-setup/" class="project-card">
-                    <div class="card-content">
-                        <h3>Modern C++ Course</h3>
-                        <p>High-performance implementations, axiomatic derivations, and assembly analysis.</p>
-                        <span class="tag tag-cpp">C++20</span>
-                    </div>
-                </a>
-
-                <a href="https://github.com/raikrahul/algocpp" class="project-card">
-                    <div class="card-content">
-                        <h3>Algo C++</h3>
-                        <p>Advanced algorithmic solutions and competitive programming optimizations.</p>
-                        <span class="tag tag-cpp">C++</span>
-                    </div>
-                </a>
-
-                <a href="https://github.com/raikrahul/algo2025" class="project-card">
-                    <div class="card-content">
-                        <h3>Algo 2025</h3>
-                        <p>Forward-looking algorithm research and modern problem-solving patterns.</p>
-                        <span class="tag tag-cpp">C++</span>
-                    </div>
-                </a>
-
-                <a href="https://github.com/raikrahul/rust_lessons" class="project-card">
-                    <div class="card-content">
-                        <h3>Rust Lessons</h3>
-                        <p>System programming concepts and memory safety explorations in Rust.</p>
-                        <span class="tag tag-rust">Rust</span>
-                    </div>
-                </a>
-            </section>
-        </main>
-
-        <footer>
-            <a href="https://github.com/raikrahul" target="_blank" rel="noopener noreferrer">GitHub Profile</a>
-        </footer>
+            <p class="title">Systems Software Engineer</p>
+            <p class="tagline">Exploring the depths of the Linux Kernel, low-level optimization, and algorithmic efficiency.</p>
+            
+            <div class="social">
+                <a href="https://github.com/raikrahul" target="_blank"><i class="fab fa-github"></i></a>
+                <a href="mailto:contact@example.com"><i class="fas fa-envelope"></i></a>
+                <a href="https://linkedin.com/in/" target="_blank"><i class="fab fa-linkedin"></i></a>
+            </div>
+            
+            <div class="tech">
+                <span><i class="fas fa-microchip"></i> Linux Kernel</span>
+                <span><i class="fas fa-code"></i> C / C++20</span>
+                <span><i class="fab fa-rust"></i> Rust</span>
+                <span><i class="fas fa-network-wired"></i> RDMA</span>
+            </div>
+            
+            <div class="projects">
+                <div class="label"><i class="fas fa-folder-open"></i> Projects</div>
+                <div class="proj-list">
+                    <a href="https://raikrahul.github.io/linux_kernel_portfolio" class="proj">
+                        <div class="proj-icon"><i class="fas fa-terminal"></i></div>
+                        <div><h3>Linux Kernel Portfolio</h3><p>Kernel subsystems, memory management</p></div>
+                    </a>
+                    <a href="https://github.com/raikrahul/learnlinux" class="proj">
+                        <div class="proj-icon"><i class="fab fa-linux"></i></div>
+                        <div><h3>Learn Linux</h3><p>Linux internals, system calls</p></div>
+                    </a>
+                    <a href="https://raikrahul.github.io/modern-cpp-course-setup/" class="proj">
+                        <div class="proj-icon"><i class="fas fa-bolt"></i></div>
+                        <div><h3>Modern C++ Course</h3><p>High-performance C++20</p></div>
+                    </a>
+                    <a href="https://github.com/raikrahul/algocpp" class="proj">
+                        <div class="proj-icon"><i class="fas fa-chart-line"></i></div>
+                        <div><h3>Algo C++</h3><p>Advanced algorithms</p></div>
+                    </a>
+                    <a href="https://github.com/raikrahul/algo2025" class="proj">
+                        <div class="proj-icon"><i class="fas fa-rocket"></i></div>
+                        <div><h3>Algo 2025</h3><p>Algorithm research</p></div>
+                    </a>
+                    <a href="https://github.com/raikrahul/rust_lessons" class="proj">
+                        <div class="proj-icon"><i class="fas fa-shield-alt"></i></div>
+                        <div><h3>Rust Lessons</h3><p>Systems programming</p></div>
+                    </a>
+                </div>
+            </div>
+            
+            <footer>Built with <i class="fas fa-heart"></i> for low-level systems</footer>
+        </div>
+        
+        <div class="right">
+            <h2><i class="fab fa-github"></i> GitHub Activity</h2>
+            <div class="graph">
+                <img src="https://ghchart.rshah.org/22c55e/raikrahul" alt="Contributions">
+            </div>
+            <div class="recent">
+                <h3><i class="fas fa-code-commit"></i> Recent Commits</h3>
+                <div id="feed" class="feed">
+                    <div class="loading"><i class="fas fa-spinner fa-spin"></i> Loading...</div>
+                </div>
+            </div>
+        </div>
     </div>
+    
+    <script>
+        fetch('https://api.github.com/users/raikrahul/events?per_page=8')
+            .then(r => r.json())
+            .then(events => {
+                const feed = document.getElementById('feed');
+                if (!Array.isArray(events)) { feed.innerHTML = '<p class="loading">Could not load</p>'; return; }
+                feed.innerHTML = events.slice(0,8).map(e => {
+                    const repo = e.repo.name.replace('raikrahul/','');
+                    const t = Math.floor((Date.now() - new Date(e.created_at))/1000);
+                    const time = t<60?'now':t<3600?Math.floor(t/60)+'m':t<86400?Math.floor(t/3600)+'h':Math.floor(t/86400)+'d';
+                    const icons = {PushEvent:'fa-code-commit',CreateEvent:'fa-plus',ReleaseEvent:'fa-tag',ForkEvent:'fa-code-fork'};
+                    const acts = {PushEvent:'Pushed',CreateEvent:'Created',ReleaseEvent:'Released',ForkEvent:'Forked'};
+                    return `<div class="act"><div class="act-icon"><i class="fas ${icons[e.type]||'fa-circle'}"></i></div><div class="act-text"><span>${acts[e.type]||e.type.replace('Event','')}</span> <a href="https://github.com/${e.repo.name}" target="_blank">${repo}</a></div><span class="act-time">${time}</span></div>`;
+                }).join('');
+            })
+            .catch(() => { document.getElementById('feed').innerHTML = '<p class="loading">Could not load</p>'; });
+    </script>
 </body>
-
 </html>
