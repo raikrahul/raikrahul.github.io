@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Modern C++ Course | Raik Rahul</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        :root {
+            --bg1: #0a0a0a; --bg2: #0f0f0f; --card: #151515; --card-h: #1a1a1a;
+            --t1: #e0e0e0; --t2: #707070; --green: #22c55e; --red: #ef4444; --border: #222;
+        }
+        body { background: var(--bg1); color: var(--t1); font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; line-height: 1.6; padding: 2rem; }
+        .container { max-width: 800px; margin: 0 auto; }
+        
+        .back { display: inline-flex; align-items: center; gap: 0.4rem; color: var(--t2); text-decoration: none; font-size: 0.85rem; margin-bottom: 2rem; }
+        .back:hover { color: var(--green); }
+        
+        h1 { font-size: 2rem; margin-bottom: 0.5rem; }
+        .subtitle { color: var(--green); font-size: 1rem; margin-bottom: 1rem; }
+        .desc { color: var(--t2); margin-bottom: 2rem; max-width: 600px; }
+        
+        .section { margin-bottom: 2rem; }
+        .section-title { font-size: 0.75rem; color: var(--t2); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 0.75rem; display: flex; align-items: center; gap: 0.4rem; }
+        .section-title i { color: var(--green); }
+        
+        .modules { display: flex; flex-direction: column; gap: 0.5rem; }
+        .module { display: flex; align-items: center; gap: 0.75rem; background: var(--card); border: 1px solid var(--border); border-radius: 6px; padding: 1rem; text-decoration: none; transition: 0.2s; }
+        .module:hover { background: var(--card-h); border-color: #333; }
+        .module-num { width: 36px; height: 36px; border-radius: 8px; background: var(--bg2); display: flex; align-items: center; justify-content: center; font-weight: 700; color: var(--green); font-size: 0.9rem; }
+        .module:hover .module-num { background: var(--green); color: #000; }
+        .module-info h3 { font-size: 0.9rem; color: var(--t1); margin-bottom: 0.15rem; }
+        .module-info p { font-size: 0.75rem; color: var(--t2); }
+        
+        .topics { display: flex; flex-wrap: wrap; gap: 0.4rem; margin-top: 1.5rem; }
+        .topic { font-size: 0.7rem; padding: 0.3rem 0.6rem; background: var(--card); border: 1px solid var(--border); border-radius: 4px; color: var(--t2); }
+        
+        .repo-link { display: inline-flex; align-items: center; gap: 0.4rem; color: var(--t2); text-decoration: none; font-size: 0.85rem; margin-top: 2rem; padding: 0.6rem 1rem; background: var(--card); border: 1px solid var(--border); border-radius: 6px; }
+        .repo-link:hover { border-color: var(--green); color: var(--green); }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <a href="../index.html" class="back"><i class="fas fa-arrow-left"></i> Back to Portfolio</a>
+        
+        <h1>Modern C++ Course</h1>
+        <p class="subtitle">High-Performance C++20 & Assembly Analysis</p>
+        <p class="desc">Deep dive into modern C++ with focus on STL internals, cache efficiency, performance optimization, and assembly-level understanding.</p>
+        
+        <div class="section">
+            <div class="section-title"><i class="fas fa-book"></i> Modules</div>
+            <div class="modules">
+                <a href="https://github.com/raikrahul/modern-cpp-course-setup/tree/main/1" class="module">
+                    <div class="module-num">1</div>
+                    <div class="module-info">
+                        <h3>Foundations</h3>
+                        <p>C++ basics, compilation, memory model</p>
+                    </div>
+                </a>
+                <a href="https://github.com/raikrahul/modern-cpp-course-setup/tree/main/2" class="module">
+                    <div class="module-num">2</div>
+                    <div class="module-info">
+                        <h3>Types & Memory</h3>
+                        <p>Value categories, references, move semantics</p>
+                    </div>
+                </a>
+                <a href="https://github.com/raikrahul/modern-cpp-course-setup/tree/main/3" class="module">
+                    <div class="module-num">3</div>
+                    <div class="module-info">
+                        <h3>Templates</h3>
+                        <p>Generic programming, SFINAE, concepts</p>
+                    </div>
+                </a>
+                <a href="https://github.com/raikrahul/modern-cpp-course-setup/tree/main/4" class="module">
+                    <div class="module-num">4</div>
+                    <div class="module-info">
+                        <h3>STL Containers</h3>
+                        <p>Vector, map, unordered_map internals</p>
+                    </div>
+                </a>
+                <a href="https://github.com/raikrahul/modern-cpp-course-setup/tree/main/5" class="module">
+                    <div class="module-num">5</div>
+                    <div class="module-info">
+                        <h3>STL Logic & Assembly</h3>
+                        <p>Algorithm analysis, assembly output, optimization</p>
+                    </div>
+                </a>
+                <a href="https://github.com/raikrahul/modern-cpp-course-setup/tree/main/6" class="module">
+                    <div class="module-num">6</div>
+                    <div class="module-info">
+                        <h3>OOP & Cache Efficiency</h3>
+                        <p>Virtual functions, cache lines, rooftop performance</p>
+                    </div>
+                </a>
+            </div>
+        </div>
+        
+        <div class="topics">
+            <span class="topic">C++20</span>
+            <span class="topic">STL</span>
+            <span class="topic">Assembly</span>
+            <span class="topic">Cache Optimization</span>
+            <span class="topic">Move Semantics</span>
+            <span class="topic">Templates</span>
+            <span class="topic">SFINAE</span>
+            <span class="topic">Concepts</span>
+        </div>
+        
+        <a href="https://github.com/raikrahul/modern-cpp-course-setup" class="repo-link" target="_blank">
+            <i class="fab fa-github"></i> View on GitHub
+        </a>
+    </div>
+</body>
+</html>
