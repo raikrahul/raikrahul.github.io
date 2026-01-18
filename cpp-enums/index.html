@@ -4,176 +4,125 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>SYSTEMS AXIOMS: ENUM MECHANICS</title>
+    <title>SYSTEMS DERIVATION: O3 vs O0</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/bw.min.css">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
     <style>
-        /* BASE LAYER */
         :root {
             --bg: #000000;
             --fg: #ffffff;
-            --brd: #ffffff;
             --dim: #666666;
-        }
-
-        * {
-            box-sizing: border-box;
-            margin: 0;
-            padding: 0;
         }
 
         body {
             background: var(--bg);
             color: var(--fg);
             font-family: "Courier New", Courier, monospace;
-            font-size: 14px;
-            line-height: 1.3;
-            margin: 0;
             padding: 2rem;
+            margin: 0;
         }
 
-        /* GRID LAYOUT: 2 COLUMNS (BOOK STYLE) */
-        .grid-container {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 4rem;
-            /* Gutter between pages */
+        /* LAYOUT */
+        .container {
             max-width: 1800px;
             margin: 0 auto;
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 2rem;
         }
 
-        /* CARD/MODULE STYLE */
-        .module {
-            border: 1px solid var(--brd);
-            padding: 1.5rem;
-            margin-bottom: 2rem;
+        .full-width {
+            grid-column: 1 / -1;
+        }
+
+        /* MODULE BOX */
+        .box {
+            border: 1px solid var(--fg);
+            padding: 1rem;
             position: relative;
+            margin-bottom: 2rem;
         }
 
-        .module-header {
+        .box-title {
             position: absolute;
-            top: -0.8rem;
+            top: -0.7rem;
             left: 1rem;
             background: var(--bg);
             padding: 0 0.5rem;
             font-weight: bold;
-            text-transform: uppercase;
             border: 1px solid var(--fg);
+        }
+
+        /* DERIVATION FLOW */
+        .step {
+            margin-bottom: 1rem;
+            border-bottom: 1px dotted var(--dim);
+            padding-bottom: 1rem;
+        }
+
+        .step:last-child {
+            border-bottom: none;
+            margin-bottom: 0;
+        }
+
+        .def {
+            color: var(--dim);
+            font-style: italic;
+            margin-bottom: 0.5rem;
+        }
+
+        .arrow {
+            text-align: center;
+            color: var(--fg);
+            font-weight: bold;
+            margin: 0.5rem 0;
+        }
+
+        /* DATA TABLES */
+        .matrix {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 1rem;
+        }
+
+        .matrix th,
+        .matrix td {
+            border: 1px solid var(--dim);
+            padding: 0.5rem;
+            text-align: left;
+        }
+
+        .matrix th {
+            border-bottom: 2px solid var(--fg);
         }
 
         /* TYPOGRAPHY */
         h1 {
-            font-size: 32px;
-            text-transform: uppercase;
-            font-weight: bold;
-            margin-bottom: 3rem;
             text-align: center;
             border-bottom: 4px double var(--fg);
             padding-bottom: 1rem;
-        }
-
-        h2 {
-            font-size: 14px;
-            text-transform: uppercase;
-            font-weight: bold;
-            margin-bottom: 0.5rem;
-            color: var(--fg);
-            text-decoration: underline;
-        }
-
-        .stat-box {
-            border: 1px solid var(--dim);
-            padding: 0.5rem;
-            margin-top: 0.5rem;
-        }
-
-        .stat-row {
-            display: flex;
-            justify-content: space-between;
-            margin-bottom: 0.2rem;
-        }
-
-        .val {
-            font-weight: bold;
-        }
-
-        pre {
-            border: 1px solid var(--dim);
-            padding: 0.5rem;
-            font-size: 12px;
-            margin-bottom: 1rem;
-            overflow-x: auto;
+            margin-bottom: 2rem;
         }
 
         code {
             font-family: inherit;
         }
 
-        /* UTILS */
-        .code-label {
-            display: inline-block;
-            font-size: 10px;
-            color: var(--dim);
-            text-transform: uppercase;
-            letter-spacing: 1px;
-            margin-bottom: 0.2rem;
+        pre {
+            border: 1px solid var(--dim);
+            padding: 0.5rem;
+            overflow-x: auto;
+            font-size: 11px;
         }
 
-        .code-link {
-            font-size: 10px;
+        a {
             color: var(--fg);
             text-decoration: underline;
-            margin-left: 0.5rem;
-            cursor: pointer;
-        }
-
-        .arrow {
-            text-align: center;
-            font-weight: bold;
-            margin: 0.5rem 0;
-            color: var(--dim);
-        }
-
-        .conclusion {
-            border: 2px solid #fff;
-            padding: 1rem;
-            text-align: center;
-            font-weight: bold;
-            margin-top: 2rem;
-        }
-
-        /* LINKS SECTION */
-        .links-section {
-            margin-top: 4rem;
-            border-top: 1px dotted var(--dim);
-            padding-top: 2rem;
-        }
-
-        .link-list {
-            list-style: square;
-            margin-left: 2rem;
-        }
-
-        .link-list li {
-            margin-bottom: 0.5rem;
-        }
-
-        .link-list a {
-            color: var(--fg);
-            text-decoration: underline;
-            font-weight: bold;
-        }
-
-        .link-list a:hover {
-            background: var(--fg);
-            color: var(--bg);
-            text-decoration: none;
         }
 
         @media(max-width: 1100px) {
-            .grid-container {
+            .container {
                 grid-template-columns: 1fr;
-                gap: 2rem;
             }
         }
     </style>
@@ -181,198 +130,187 @@
 
 <body>
 
-    <h1>Systems Axioms: x86-64 Enum Mechanics</h1>
+    <h1>SYSTEMS DERIVATION: FROM AXIOM TO OBSERVATION</h1>
 
-    <div class="grid-container">
+    <div class="container">
 
-        <!-- LEFT COLUMN -->
-        <div class="column">
-
-            <!-- MODULE 0x00: SIZE -->
-            <div class="module">
-                <div class="module-header">AXIOM 0x00: SIZE DEFINITION</div>
-
-                <div class="code-label">CODE </div><a
-                    href="https://github.com/raikrahul/raikrahul.github.io/blob/main/cpp-enums/enum_storage.cpp"
-                    class="code-link">(enum_storage.cpp)</a>
-                <pre><code class="language-cpp">enum class OrderType        { BUY, SELL }; // Default
-enum class OrderType2 : char{ BUY, SELL }; // Explicit char
-
-std::cout << sizeof(OrderType);
-std::cout << sizeof(OrderType2);</code></pre>
-
-                <div class="arrow">⬇ EXECUTE ⬇</div>
-
-                <div class="code-label">OUTPUT</div>
-                <pre><code class="language-bash">sizeof(OrderType): 4
-sizeof(OrderType2): 1</code></pre>
-
-                <div class="stat-box">
-                    <div class="stat-row"><span>FACT: Explicit char reduces size by 75%</span></div>
+        <!-- AXIOM 0: DEFINITIONS -->
+        <div class="box full-width">
+            <div class="box-title">0. PRIMITIVE DEFINITIONS</div>
+            <div style="display:grid; grid-template-columns: 1fr 1fr 1fr 1fr; gap:1rem;">
+                <div>
+                    <strong>int</strong><br>
+                    <span class="def">size: 4 bytes (32-bit)</span>
+                </div>
+                <div>
+                    <strong>char</strong><br>
+                    <span class="def">size: 1 byte (8-bit)</span>
+                </div>
+                <div>
+                    <strong>movl</strong><br>
+                    <span class="def">Move Long (32-bit data)</span>
+                </div>
+                <div>
+                    <strong>movb</strong><br>
+                    <span class="def">Move Byte (8-bit data)</span>
+                </div>
+                <div>
+                    <strong>cmov</strong><br>
+                    <span class="def">Conditional Move (No Branch)</span>
+                </div>
+                <div>
+                    <strong>jne</strong><br>
+                    <span class="def">Jump Not Equal (Branch)</span>
+                </div>
+                <div>
+                    <strong>cout</strong><br>
+                    <span class="def">Standard Output Stream</span>
+                </div>
+                <div>
+                    <strong>Spill</strong><br>
+                    <span class="def">Register -> Memory (Slow)</span>
                 </div>
             </div>
-
-            <!-- MODULE 0x02: IO PATH (INT) -->
-            <div class="module">
-                <div class="module-header">AXIOM 0x02: I/O PATH (INT)</div>
-
-                <div class="code-label">CODE </div><a
-                    href="https://github.com/raikrahul/raikrahul.github.io/blob/main/cpp-enums/test_cout_int.cpp"
-                    class="code-link">(test_cout_int.cpp)</a>
-                <pre><code class="language-cpp">OrderType type = OrderType::SELL;
-std::cout << static_cast<int>(type);</code></pre>
-
-                <div class="arrow">⬇ ASSEMBLY (test_cout_int.s) ⬇</div>
-
-                <pre><code class="language-asm">movl $1, -8(%rbp)               # Store 1
-movl -8(%rbp), %esi             # Load to ARG2
-callq _ZNSolsEi@PLT             # Call operator<<(int)</code></pre>
-
-                <div class="stat-box">
-                    <div class="stat-row"><span>TARGET: std::ostream::operator<<(int)< /span>
-                    </div>
-                    <div class="stat-row"><span>COMPLEXITY: HIGH (Formatting, Sign Check)</span></div>
-                </div>
-            </div>
-
-            <!-- MODULE 0x04: LOGIC PATH (INT) -->
-            <div class="module">
-                <div class="module-header">AXIOM 0x04: LOGIC PATH (INT)</div>
-
-                <div class="code-label">CODE </div><a
-                    href="https://github.com/raikrahul/raikrahul.github.io/blob/main/cpp-enums/test_cmov.cpp"
-                    class="code-link">(test_cmov.cpp)</a>
-                <pre><code class="language-cpp">OrderType type = (i & 1) ? SELL : BUY;
-// TERNARY OPERATOR using INTs</code></pre>
-
-                <div class="arrow">⬇ ASSEMBLY (test_cmov.s) ⬇</div>
-
-                <pre><code class="language-asm">cmpl $0, %edx           # Compare
-cmovnel %ecx, %eax      # CONDITIONAL MOVE</code></pre>
-
-                <div class="stat-box">
-                    <div class="stat-row"><span>INSTRUCTION: cmovnel (32-bit)</span></div>
-                    <div class="stat-row"><span>BRANCHES: 0 | SPILLS: 0</span></div>
-                </div>
-            </div>
-
-            <!-- MODULE 0x06: BENCHMARK (INT) -->
-            <div class="module">
-                <div class="module-header">AXIOM 0x06: BENCHMARK (INT)</div>
-                <div class="stat-box" style="border: 2px solid white;">
-                    <div class="stat-row"><span>METRIC</span><span class="val">RESULT</span></div>
-                    <div class="stat-row"><span>Time (IO)</span><span class="val">335 ms</span></div>
-                    <div class="stat-row"><span>Time (Logic)</span><span class="val">253 ms (FASTER)</span></div>
-                </div>
-            </div>
-
         </div>
 
-        <!-- RIGHT COLUMN -->
-        <div class="column">
+        <!-- DERIVATION 1: STORAGE -->
+        <div class="box">
+            <div class="box-title">1. DERIVATION: STORAGE COST</div>
 
-            <!-- MODULE 0x01: MEMORY STORAGE -->
-            <div class="module">
-                <div class="module-header">AXIOM 0x01: MEMORY STORAGE</div>
-
-                <div class="code-label">CODE </div>
-                <pre><code class="language-cpp">OrderType  a = OrderType::SELL;  // int
-OrderType2 b = OrderType2::SELL; // char</code></pre>
-
-                <div class="arrow">⬇ ASSEMBLY (case1.s vs case2.s) ⬇</div>
-
-                <div class="code-label">INT ENUM</div>
-                <pre><code class="language-asm">movl $1, -8(%rbp)     # 32-bit Move</code></pre>
-
-                <div class="code-label">CHAR ENUM</div>
-                <pre><code class="language-asm">movb $83, -9(%rbp)    # 8-bit Move</code></pre>
-
-                <div class="stat-box">
-                    <div class="stat-row"><span>FACT: Instruction width matches type size</span></div>
-                </div>
+            <div class="step">
+                <div class="def">DEFINING THE EXPERIMENT:</div>
+                <pre><code class="language-cpp">enum class E_INT        { A, B }; // default int
+enum class E_CHAR : char{ A, B }; // explicit char
+E_INT  i = E_INT::A;
+E_CHAR c = E_CHAR::A;</code></pre>
             </div>
 
-            <!-- MODULE 0x03: IO PATH (CHAR) -->
-            <div class="module">
-                <div class="module-header">AXIOM 0x03: I/O PATH (CHAR)</div>
-
-                <div class="code-label">CODE </div><a
-                    href="https://github.com/raikrahul/raikrahul.github.io/blob/main/cpp-enums/test_cout_char.cpp"
-                    class="code-link">(test_cout_char.cpp)</a>
-                <pre><code class="language-cpp">OrderType2 type = OrderType2::SELL;
-std::cout << static_cast<char>(type);</code></pre>
-
-                <div class="arrow">⬇ ASSEMBLY (test_cout_char.s) ⬇</div>
-
-                <pre><code class="language-asm">movb $83, -5(%rbp)              # Store 'S'
-movsbl -5(%rbp), %esi           # Sign Extend
-callq _ZStls..._c@PLT           # Call operator<<(char)</code></pre>
-
-                <div class="stat-box">
-                    <div class="stat-row"><span>TARGET: std::operator<<(char)< /span>
-                    </div>
-                    <div class="stat-row"><span>COMPLEXITY: LOW (Direct Buffer Write)</span></div>
-                </div>
+            <div class="step">
+                <div class="arrow">⬇ COMPILATION (clang++ -S) ⬇</div>
+                <div class="def">OBSERVING INSTRUCTION WIDTH:</div>
+                <pre><code class="language-asm">movl $0, -4(%rbp)   # int uses movl (4 bytes)
+movb $0, -5(%rbp)   # char uses movb (1 byte)</code></pre>
             </div>
 
-            <!-- MODULE 0x05: LOGIC PATH (CHAR) -->
-            <div class="module">
-                <div class="module-header">AXIOM 0x05: LOGIC PATH (CHAR)</div>
-
-                <div class="code-label">CODE </div><a
-                    href="https://github.com/raikrahul/raikrahul.github.io/blob/main/cpp-enums/test_cmov.cpp"
-                    class="code-link">(test_cmov.cpp)</a>
-                <pre><code class="language-cpp">OrderType2 type = (i & 1) ? SELL : BUY;
-// TERNARY OPERATOR using CHARs</code></pre>
-
-                <div class="arrow">⬇ ASSEMBLY (test_cmov.s) ⬇</div>
-
-                <pre><code class="language-asm">movb %dl, -6(%rbp)      # SPILL to stack
-cmpl $0, %ecx           # Compare
-branch_logic:
-jne .LBB1_2             # JUMP (Branch)
-movb -5(%rbp), %al      # RELOAD from stack</code></pre>
-
-                <div class="stat-box">
-                    <div class="stat-row"><span>INSTRUCTION: jne (Branch)</span></div>
-                    <div class="stat-row"><span>BRANCHES: 1 (Risk of stall) | SPILLS: 4</span></div>
-                </div>
+            <div class="step">
+                <div class="def">INFERENCE:</div>
+                <div>Instruction width <strong>matches</strong> data type size. <br>∴ char saves 75% memory.</div>
             </div>
-
-            <!-- MODULE 0x07: BENCHMARK (CHAR) -->
-            <div class="module">
-                <div class="module-header">AXIOM 0x07: BENCHMARK (CHAR)</div>
-                <div class="stat-box" style="border: 2px solid white;">
-                    <div class="stat-row"><span>METRIC</span><span class="val">RESULT</span></div>
-                    <div class="stat-row"><span>Time (IO)</span><span class="val">95 ms (FASTER)</span></div>
-                    <div class="stat-row"><span>Time (Logic)</span><span class="val">296 ms (SLOWER)</span></div>
-                </div>
-            </div>
-
         </div>
 
-    </div>
+        <!-- DERIVATION 2: IO COMPLEXITY -->
+        <div class="box">
+            <div class="box-title">2. DERIVATION: I/O COST</div>
 
-    <div class="conclusion">
-        <h2>ROOT CAUSE ANALYSIS</h2>
-        <p>x86-64 has `cmov` for 32-bit registers but NOT for 8-bit registers.</p>
-        <p>When using `char` enums for logic, the compiler falls back to Branch + Stack Spills.</p>
-    </div>
+            <div class="step">
+                <div class="def">DEFINING THE EXPERIMENT:</div>
+                <pre><code class="language-cpp">cout << (int)i;   // integer output
+cout << (char)c;  // character output</code></pre>
+            </div>
 
-    <!-- LINKS / APPENDIX -->
-    <div class="links-section">
-        <h1>AXIOM 0xFF: APPENDIX & DERIVATIONS</h1>
-        <ul class="link-list">
-            <li><a href="SURPRISE_REPORT.md">SURPRISE_REPORT.md (Full Investigation Report)</a></li>
-            <li><a href="BRANCH_VS_CMOV_AXIOMS.md">BRANCH_VS_CMOV_AXIOMS.md (Logic Derivation)</a></li>
-            <li><a href="09-pure-move-benchmark.md">09-pure-move-benchmark.md (Unoptimized Benchmark)</a></li>
-            <li><a href="08-benchmark-results-proof.md">08-benchmark-results-proof.md (Original Proofs)</a></li>
-            <li><a href="https://github.com/raikrahul/raikrahul.github.io/blob/main/cpp-enums/pure_enum_test.cpp">pure_enum_test.cpp
-                    (Source)</a></li>
-        </ul>
-        <div style="text-align:center; font-size:10px; color:#666; margin-top:1rem;">
-            GENERATED BY ANTIGRAVITY | SYSTEMS ENGINEERING 2026
+            <div class="step">
+                <div class="arrow">⬇ COMPILATION (clang++ -S) ⬇</div>
+                <div class="def">OBSERVING FUNCTION CALLS:</div>
+                <pre><code class="language-asm">call operator<<(int)   # Complex formatting logic
+call operator<<(char)  # Simple buffer write</code></pre>
+            </div>
+
+            <div class="step">
+                <div class="def">INFERENCE:</div>
+                <div>Integer IO requires formatting overhead.<br>∴ char IO is faster (3.5x measured).</div>
+            </div>
         </div>
+
+        <!-- DERIVATION 3: LOGIC EXECUTION -->
+        <div class="box full-width">
+            <div class="box-title">3. DERIVATION: CPU EXECUTION (THE SURPRISE)</div>
+
+            <div style="display:grid; grid-template-columns: 1fr 1fr; gap:2rem;">
+                <div>
+                    <div class="def">PATH A: INT LOGIC</div>
+                    <pre><code class="language-cpp">int val = (cond) ? 1 : 0;</code></pre>
+
+                    <div class="arrow">⬇ ASM ⬇</div>
+
+                    <pre><code class="language-asm">cmovnel %ecx, %eax
+# 1 Instruction
+# 0 Branches
+# 0 Spills</code></pre>
+                </div>
+
+                <div>
+                    <div class="def">PATH B: CHAR LOGIC</div>
+                    <pre><code class="language-cpp">char val = (cond) ? 'A' : 'B';</code></pre>
+
+                    <div class="arrow">⬇ ASM ⬇</div>
+
+                    <pre><code class="language-asm">jne .LBB1_2
+movb -5(%rbp), %al
+# Multiple Instructions
+# 1 Branch (Hazard)
+# 4 Spills (Memory)</code></pre>
+                </div>
+            </div>
+
+            <div class="step" style="margin-top:1rem; border-top:1px dotted var(--dim); padding-top:1rem;">
+                <div class="def">INFERENCE:</div>
+                <div>x86-64 <strong>lacks</strong> 8-bit Conditional Move (`cmovb`).<br>∴ Compiler <strong>must</strong>
+                    use Branch + Stack for `char`.<br>∴ `int` is faster for pure logic.</div>
+            </div>
+        </div>
+
+        <!-- DERIVATION 4: FINAL MATRIX -->
+        <div class="box full-width">
+            <div class="box-title">4. OBSERVATION MATRIX</div>
+            <table class="matrix">
+                <thead>
+                    <tr>
+                        <th>METRIC</th>
+                        <th>INT ENUM</th>
+                        <th>CHAR ENUM</th>
+                        <th>WINNER</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>Storage Size</td>
+                        <td>4 Bytes</td>
+                        <td>1 Byte</td>
+                        <td><strong>CHAR (-75%)</strong></td>
+                    </tr>
+                    <tr>
+                        <td>IO Time (10M)</td>
+                        <td>335 ms</td>
+                        <td>95 ms</td>
+                        <td><strong>CHAR (3.5x)</strong></td>
+                    </tr>
+                    <tr>
+                        <td>Logic Time (100M)</td>
+                        <td>253 ms</td>
+                        <td>296 ms</td>
+                        <td><strong>INT (17%)</strong></td>
+                    </tr>
+                    <tr>
+                        <td>Instruction</td>
+                        <td><code>cmov</code> (Safe)</td>
+                        <td><code>jne</code> (Hazard)</td>
+                        <td><strong>INT</strong></td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <!-- REFERENCE LINKS -->
+        <div class="box full-width">
+            <div class="box-title">APPENDIX: SOURCE MATERIAL</div>
+            <ul style="list-style:square; margin-left:1rem;">
+                <li><a href="pure_enum_test.cpp">pure_enum_test.cpp</a></li>
+                <li><a href="test_cmov.cpp">test_cmov.cpp</a></li>
+                <li><a href="SURPRISE_REPORT.md">SURPRISE_REPORT.md</a></li>
+                <li><a href="BRANCH_VS_CMOV_AXIOMS.md">BRANCH_VS_CMOV_AXIOMS.md</a></li>
+            </ul>
+        </div>
+
     </div>
 
     <script>hljs.highlightAll();</script>
