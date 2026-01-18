@@ -2,3 +2,4 @@ enum_storage
 enum_benchmark
 test_enum
 *.o
+pure_enum_test_*
