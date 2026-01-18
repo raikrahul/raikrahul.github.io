@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ENUM_CLASS_PERF_ANALYSIS_V5</title>
+    <title>ENUM_CLASS_PERF_ANALYSIS_V6</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/bw.min.css">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
     <style>
@@ -86,7 +86,7 @@
 
         /* COMPONENTS */
         .block {
-            margin-bottom: 1.5rem;
+            margin-bottom: 2rem;
         }
 
         .stat-box {
@@ -159,63 +159,61 @@
 
     <div class="container">
 
-        <!-- LEFT PAGE: DATA & OBSERVATIONS -->
+        <!-- LEFT PAGE: RAW DATA & BENCHMARKS -->
         <div class="page page-left">
             <div>
                 <h1>01. The Observation [DATA]</h1>
                 <div class="metadata">TARGET: x86_64-LINUX-GNU | CLANG 18.1.3 (-std=c++23) | O3 vs O0</div>
 
                 <div class="block">
-                    <h2>[A] THE CODE</h2>
-                    <pre><code class="language-cpp">enum class OrderType        { BUY, SELL }; // 4 Bytes (int)
-enum class OrderType2 : char{ BUY, SELL }; // 1 Byte  (char)
+                    <h2>[A] TEST 1: STORAGE SIZE</h2>
+                    <div class="stat-box">
+                        <div class="stat-row"><span>sizeof(OrderType)</span><span class="val">4 BYTES</span></div>
+                        <div class="stat-row"><span>sizeof(OrderType2)</span><span class="val">1 BYTE</span></div>
+                    </div>
+                    <pre><code class="language-asm"># INT ENUM (7 bytes)
+movl $1, -8(%rbp)     # c7 45 f8 01 00 00 00
 
-// TERNARY OP (The Trigger)
-OrderType type  = (i & 1) ? OrderType::SELL  : OrderType::BUY;
-OrderType2 type2= (i & 1) ? OrderType2::SELL : OrderType2::BUY;</code></pre>
+# CHAR ENUM (4 bytes)
+movb $83, -9(%rbp)    # c6 45 f7 53</code></pre>
                 </div>
 
                 <div class="block">
-                    <h2>[B] HYPOTHESIS vs FINDING</h2>
+                    <h2>[B] TEST 2: WITH COUT (10M ITER)</h2>
                     <div class="stat-box">
-                        <pre style="border:none; padding:0; margin:0;">
-HYPOTHESIS:
-    char < int (1B < 4B)
-    ∴ char == FASTER
-
-REALITY (MEASURED):
-    IO:      char FASTER (3.5x)
-    STORAGE: char SLOWER (17%)
-                    </pre>
+                        <div class="stat-row"><span>INT (CAST TO INT)</span><span class="val">335 ms</span></div>
+                        <div class="stat-row"><span>CHAR (DIRECT)</span><span class="val good">95 ms</span></div>
+                        <div class="stat-row"><span>DELTA</span><span class="val">CHAR 3.5x FASTER</span></div>
                     </div>
+                    <pre><code class="language-asm"># INT: Operator<<(int) -> COMPLEX
+callq _ZNSolsEi@PLT
+
+# CHAR: Operator<<(char) -> SIMPLE
+callq _ZStlsISt11char_traitsIcEERSt13basic_ostreamIcT_ES5_c@PLT</code></pre>
                 </div>
 
                 <div class="block">
-                    <h2>[C] BENCHMARK MATRIX</h2>
-
-                    <p style="font-style:italic;">SCENARIO 1: WITH COUT (IO BOUND)</p>
-                    <div class="stat-box">
-                        <div class="stat-row"><span>INT ENUM</span><span class="val">335 ms</span></div>
-                        <div class="stat-row"><span>CHAR ENUM</span><span class="val good">95 ms</span></div>
-                        <div class="stat-row"><span>DELTA</span><span class="val">CHAR -71% (FASTER)</span></div>
-                    </div>
-
-                    <p style="margin-top:1rem; font-style:italic;">SCENARIO 2: WITHOUT COUT (CPU BOUND -O0)</p>
+                    <h2>[C] TEST 3: WITHOUT COUT (100M ITER)</h2>
                     <div class="stat-box" style="border: 2px solid white;">
-                        <div class="stat-row"><span>INT ENUM</span><span class="val good">254 ms</span></div>
-                        <div class="stat-row"><span>CHAR ENUM</span><span class="val bad">297 ms</span></div>
-                        <div class="stat-row"><span>DELTA</span><span class="val">CHAR +17% (SLOWER)</span></div>
+                        <div class="stat-row"><span>INT (PURE STORE)</span><span class="val good">253 ms</span></div>
+                        <div class="stat-row"><span>CHAR (PURE STORE)</span><span class="val bad">296 ms</span></div>
+                        <div class="stat-row"><span>DELTA</span><span class="val">CHAR 17% SLOWER</span></div>
                     </div>
-                </div>
-            </div>
+                    <pre><code class="language-asm"># INT: CMOV (9 instr, 0 spills)
+cmovnel %ecx, %eax
 
-            <div style="margin-top:auto;">
-                <h3>SOURCE REFERENCES:</h3>
-                <ul style="list-style:square; margin-left:1.5rem; line-height:1.6;">
-                    <li><a href="SURPRISE_REPORT.md">SURPRISE_REPORT.md</a></li>
-                    <li><a href="09-pure-move-benchmark.md">09-pure-move-benchmark.md</a></li>
-                    <li><a href="08-benchmark-results-proof.md">08-benchmark-results-proof.md</a></li>
-                </ul>
+# CHAR: BRANCH (14 instr, 4 spills)
+jne .LBB4_6</code></pre>
+                </div>
+
+                <div style="margin-top:2rem;">
+                    <h3>SOURCE REFERENCES:</h3>
+                    <ul style="list-style:square; margin-left:1.5rem; line-height:1.6;">
+                        <li><a href="SURPRISE_REPORT.md">SURPRISE_REPORT.md</a></li>
+                        <li><a href="09-pure-move-benchmark.md">09-pure-move-benchmark.md</a></li>
+                        <li><a href="08-benchmark-results-proof.md">08-benchmark-results-proof.md</a></li>
+                    </ul>
+                </div>
             </div>
         </div>
 
@@ -226,62 +224,68 @@ REALITY (MEASURED):
                 <div class="metadata">ANALYSIS: ASSEMBLY, PIPELINE, & STACK SPILLS</div>
 
                 <div class="block">
-                    <h2>[A] INSTRUCTION SET LIMITATION</h2>
-                    <div style="display:grid; grid-template-columns:1fr 1fr; gap:1rem; margin-top:0.5rem;">
-                        <div>
-                            <div style="text-decoration:underline;">INT (32-bit)</div>
-                            <pre><code class="language-asm">cmovnel %ecx, %eax</code></pre>
-                            <div>> NO BRANCH</div>
-                        </div>
-                        <div>
-                            <div style="text-decoration:underline;">CHAR (8-bit)</div>
-                            <pre><code class="language-asm">jne .LBB4_6</code></pre>
-                            <div>> BRANCH REQUIRED</div>
-                        </div>
+                    <h2>[A] THE CMOV vs BRANCH AXIOM</h2>
+                    <p><strong>Axiom:</strong> x86-64 has `cmov` for 32-bit but <strong>NO</strong> conditional move for
+                        8-bit.</p>
+                    <div class="stat-box">
+                        <div class="stat-row"><span>INT (32-bit)</span><span class="val">cmovnel %ecx, %eax</span></div>
+                        <div class="stat-row"><span>CHAR (8-bit)</span><span class="val">jne .LBB4_6</span></div>
                     </div>
                 </div>
 
                 <div class="block">
-                    <h2>[B] STACK THRASHING (-O0)</h2>
-                    <div class="stat-box">
-                        <div class="stat-row"><span>INT (REGISTERS)</span><span class="val">0 SPILLS</span></div>
-                        <div class="stat-row"><span>CHAR (STACK)</span><span class="val">4 SPILLS</span></div>
+                    <h2>[B] RAW ASSEMBLY COMPARISON</h2>
+
+                    <div style="margin-bottom:1rem;">
+                        <div style="text-decoration:underline; font-weight:bold;">INT TERNARY (FAST PATH)</div>
+                        <pre><code class="language-asm">movl -12(%rbp), %edx   # Load i
+andl $1, %edx          # i & 1
+xorl %eax, %eax        # 0
+movl $1, %ecx          # 1
+cmpl $0, %edx          # Compare
+cmovnel %ecx, %eax     # CMOV (No Branch)</code></pre>
                     </div>
-                    <pre><code class="language-asm"># CHAR SLOW PATH
-movb %dl, -42(%rbp)  # Spill
-cmpl $0, %ecx        # Cmp
-movb %al, -41(%rbp)  # Spill
-jne .LBB4_6          # Branch
-movb -42(%rbp), %al  # Reload</code></pre>
+
+                    <div>
+                        <div style="text-decoration:underline; font-weight:bold;">CHAR TERNARY (SLOW PATH)</div>
+                        <pre><code class="language-asm">movl -12(%rbp), %ecx   # Load i
+andl $1, %ecx          # i & 1
+movb $83, %al          # 'S'
+movb $66, %dl          # 'B'
+movb %dl, -42(%rbp)    # SPILL STACK
+cmpl $0, %ecx          # Compare
+movb %al, -41(%rbp)    # SPILL STACK
+jne .LBB4_6            # BRANCH
+movb -42(%rbp), %al    # RELOAD STACK</code></pre>
+                    </div>
                 </div>
 
                 <div class="block">
-                    <h2>[C] ROOT CAUSE</h2>
+                    <h2>[C] SIDE-BY-SIDE SUMMARY</h2>
                     <div class="stat-box">
-                        <pre style="border:none; padding:0; margin:0;">
-1. MISSING INSTRUCTION:
-   x86-64 has cmovnel (32-bit)
-   x86-64 has NO cmovb (8-bit)
+                        <div class="stat-row"><span>METRIC</span><span class="val">INT vs CHAR</span></div>
+                        <div class="stat-row"><span>Storage</span><span class="val">4B vs 1B</span></div>
+                        <div class="stat-row"><span>Machine Code</span><span class="val">7B vs 4B</span></div>
+                        <div class="stat-row"><span>Time (IO)</span><span class="val">335ms vs 95ms</span></div>
+                        <div class="stat-row"><span>Time (Pure)</span><span class="val">253ms vs 296ms</span></div>
+                        <div class="stat-row"><span>Instruction</span><span class="val">cmov vs jne</span></div>
+                        <div class="stat-row"><span>Stack Spills</span><span class="val">0 vs 4</span></div>
+                    </div>
 
-2. CONSEQUENCE:
-   Compiler must use BRANCH (jne) for char
-   
-3. COST:
-   Branch Misprediction = ~5 cycles
-   Stack Spill/Reload   = Memory Latency
-                    </pre>
+                    <div style="margin-top:1rem; border:1px solid #fff; padding:0.5rem;">
+                        <strong>VERDICT:</strong> Use `char` for storage/IO efficiency. Use `int` for raw computational
+                        logic.
                     </div>
                 </div>
 
-            </div>
-
-            <div style="margin-top:auto;">
-                <h3>DEEP DIVE PROOFS:</h3>
-                <ul style="list-style:square; margin-left:1.5rem; line-height:1.6;">
-                    <li><a href="BRANCH_VS_CMOV_AXIOMS.md">BRANCH_VS_CMOV_AXIOMS.md</a></li>
-                    <li><a href="THE_REAL_DIFFERENCE.md">THE_REAL_DIFFERENCE.md</a></li>
-                    <li><a href="pure_enum_test.cpp">pure_enum_test.cpp</a></li>
-                </ul>
+                <div style="margin-top:2rem;">
+                    <h3>DEEP DIVE PROOFS:</h3>
+                    <ul style="list-style:square; margin-left:1.5rem; line-height:1.6;">
+                        <li><a href="BRANCH_VS_CMOV_AXIOMS.md">BRANCH_VS_CMOV_AXIOMS.md</a></li>
+                        <li><a href="THE_REAL_DIFFERENCE.md">THE_REAL_DIFFERENCE.md</a></li>
+                        <li><a href="pure_enum_test.cpp">pure_enum_test.cpp</a></li>
+                    </ul>
+                </div>
             </div>
         </div>
 
