@@ -1,291 +1,611 @@
 <!DOCTYPE html>
 <html lang="en">
-
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ENUM_CLASS_PERF_ANALYSIS_V3</title>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/bw.min.css">
+    <title>enum class Performance Analysis: Storage, Assembly, and Benchmarks</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github.min.css">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
     <style>
-        /* BASE LAYER */
-        :root {
-            --bg: #000000;
-            --fg: #ffffff;
-            --brd: #ffffff;
-            --dim: #666666;
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { 
+            background: #ffffff; color: #000000; 
+            font-family: 'Georgia', 'Times New Roman', serif; 
+            line-height: 1.8; padding: 3rem; max-width: 1200px; margin: 0 auto;
         }
-
-        * {
-            box-sizing: border-box;
-            margin: 0;
-            padding: 0;
+        h1 { 
+            font-size: 1.8rem; color: #000000; margin-bottom: 2rem; 
+            border-bottom: 2px solid #000000; padding-bottom: 0.5rem; 
+            font-weight: normal; letter-spacing: 0.05em;
         }
-
-        body {
-            background: var(--bg);
-            color: var(--fg);
-            font-family: "Courier New", Courier, monospace;
-            font-size: 14px;
-            line-height: 1.3;
-            height: 100vh;
-            overflow-y: auto;
+        pre { 
+            background: #f5f5f5; border: 1px solid #000000; 
+            padding: 1rem; overflow-x: auto; margin: 1rem 0; 
+            font-size: 0.85rem; font-family: 'Courier New', monospace;
         }
-
-        /* LAYOUT */
-        .container {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            min-height: 100vh;
-            border: 4px solid var(--brd);
+        code { font-family: 'Courier New', monospace; }
+        .inline { 
+            background: #f5f5f5; color: #000000; 
+            padding: 0.1rem 0.3rem; border: 1px solid #cccccc; 
+            font-size: 0.9em; font-family: 'Courier New', monospace;
         }
-
-        .page {
-            padding: 2rem;
-            display: flex;
-            flex-direction: column;
-            gap: 2rem;
+        table { 
+            width: 100%; border-collapse: collapse; 
+            margin: 1.5rem 0; border: 2px solid #000000;
         }
-
-        .page-left {
-            border-right: 2px solid var(--brd);
+        th { 
+            background: #000000; color: #ffffff; 
+            padding: 0.7rem; text-align: left; 
+            border: 1px solid #000000; font-weight: normal;
         }
-
-        @media(max-width: 1100px) {
-            .container {
-                grid-template-columns: 1fr;
-                border: none;
-            }
-
-            .page-left {
-                border-right: none;
-                border-bottom: 2px solid var(--brd);
-            }
+        td { 
+            padding: 0.7rem; border: 1px solid #000000; 
+            background: #ffffff;
         }
-
-        /* TYPOGRAPHY */
-        h1 {
-            font-size: 24px;
-            text-transform: uppercase;
-            font-weight: bold;
-            margin-bottom: 1rem;
-            border-bottom: 4px double var(--fg);
-            padding-bottom: 0.5rem;
+        .section { 
+            margin: 2.5rem 0; padding: 0; 
+            border-top: 1px solid #000000; padding-top: 2rem;
         }
-
-        h2 {
-            font-size: 16px;
-            text-transform: uppercase;
-            background: var(--fg);
-            color: var(--bg);
-            padding: 0.2rem 0.5rem;
-            margin-bottom: 1rem;
-            display: inline-block;
-            font-weight: bold;
-        }
-
-        /* COMPONENTS */
-        .block {
-            margin-bottom: 1.5rem;
-        }
-
-        .stat-box {
-            border: 1px solid var(--fg);
-            padding: 1rem;
-            margin-top: 0.5rem;
-        }
-
-        .stat-row {
-            display: flex;
-            justify-content: space-between;
-            margin-bottom: 0.5rem;
-            border-bottom: 1px dotted var(--dim);
-            padding-bottom: 0.2rem;
-        }
-
-        .stat-row:last-child {
-            border-bottom: none;
-            margin-bottom: 0;
-        }
-
-        .val {
-            font-weight: bold;
-        }
-
-        .bad {
-            text-decoration: underline;
-            text-decoration-style: double;
-            color: #fff;
-        }
-
-        pre {
-            border: 1px solid var(--dim);
-            padding: 0.5rem;
-            font-size: 12px;
-            margin-bottom: 1rem;
-        }
-
-        code {
-            font-family: inherit;
-        }
-
-        a {
-            color: var(--fg);
-            text-decoration: underline;
-        }
-
-        a:hover {
-            background: var(--fg);
-            color: var(--bg);
-            text-decoration: none;
-        }
-
-        .metadata {
-            font-size: 10px;
-            color: var(--dim);
-            text-transform: uppercase;
-            letter-spacing: 1px;
-            margin-bottom: 2rem;
-        }
+        .data { color: #000000; font-weight: bold; }
+        .result { color: #000000; font-weight: bold; }
+        p { margin: 1rem 0; text-align: justify; }
+        a { color: #000000; text-decoration: underline; }
+        a:hover { font-weight: bold; }
     </style>
 </head>
-
 <body>
+    <h1>enum class Performance Analysis: Storage, Assembly, and Benchmarks</h1>
 
-    <div class="container">
+    <div class="section">
+        <p>Test environment: x86-64 Linux, Clang 18.1.3, libstdc++ 13.3.0</p>
+        
+        <p>enum_storage.cpp:</p>
+        <pre><code class="language-cpp">#include &lt;iostream&gt;
 
-        <!-- LEFT PAGE: DATA & OBSERVATIONS -->
-        <div class="page page-left">
-            <div>
-                <h1>01. The Observation</h1>
-                <div class="metadata">TARGET: x86_64-LINUX-GNU | CLANG 18.1.3 (-std=c++23) | O3 vs O0</div>
+enum class OrderType { BUY, SELL };
+enum class OrderType2 : char { BUY='B', SELL='S' };
 
-                <div class="block">
-                    <h2>[A] THE CODE</h2>
-                    <pre><code class="language-cpp">enum class OrderType        { BUY, SELL }; // 4 Bytes (int)
-enum class OrderType2 : char{ BUY, SELL }; // 1 Byte  (char)
+int main() {
+  OrderType type1 = OrderType::SELL;
+  OrderType2 type2 = OrderType2::SELL;
+  
+  std::cout &lt;&lt; "sizeof(OrderType): " &lt;&lt; sizeof(type1) &lt;&lt; "\n";
+  std::cout &lt;&lt; "sizeof(OrderType2): " &lt;&lt; sizeof(type2) &lt;&lt; "\n";
+  
+  return 0;
+}</code></pre>
 
-// TERNARY OP (The Trigger)
-OrderType type  = (i & 1) ? OrderType::SELL  : OrderType::BUY;
-OrderType2 type2= (i & 1) ? OrderType2::SELL : OrderType2::BUY;</code></pre>
-                </div>
+        <p>Compilation: <span class="inline">clang++ -std=c++23 enum_storage.cpp -o enum_storage</span></p>
+        <p>Execution: <span class="inline">./enum_storage</span></p>
+        <pre><code>sizeof(OrderType): 4
+sizeof(OrderType2): 1</code></pre>
 
-                <div class="block">
-                    <h2>[B] BENCHMARK RESULTS</h2>
+        <p>Verification: <span class="inline">enum class</span> defaults to <span class="inline">int</span> (4 bytes), <span class="inline">enum class : char</span> uses 1 byte.</p>
 
-                    <p style="font-style:italic;">1. IO/PRINTING (10M OPS)</p>
-                    <div class="stat-box">
-                        <div class="stat-row"><span>INT ENUM</span><span class="val">335 ms</span></div>
-                        <div class="stat-row"><span>CHAR ENUM</span><span class="val">95 ms</span></div>
-                        <div class="stat-row"><span>RESULT</span><span class="val">CHAR IS 3.5x FASTER</span></div>
-                    </div>
+        <p>ASCII verification:</p>
+        <pre><code class="language-cpp">std::cout &lt;&lt; static_cast&lt;int&gt;('B') &lt;&lt; "\n";  // outputs: 66
+std::cout &lt;&lt; static_cast&lt;int&gt;('S') &lt;&lt; "\n";  // outputs: 83</code></pre>
 
-                    <p style="margin-top:1rem; font-style:italic;">2. PURE MOVE - OPTIMIZED (-O3)</p>
-                    <div class="stat-box">
-                        <div class="stat-row"><span>INT ENUM</span><span class="val">33 ms</span></div>
-                        <div class="stat-row"><span>CHAR ENUM</span><span class="val">25 ms</span></div>
-                        <div class="stat-row"><span>RESULT</span><span class="val">CHAR IS 1.3x FASTER</span></div>
-                    </div>
-
-                    <p style="margin-top:1rem; font-style:italic;">3. PURE MOVE - DEBUG (-O0) [THE ANOMALY]</p>
-                    <div class="stat-box" style="border: 2px solid white;">
-                        <div class="stat-row"><span>INT ENUM</span><span class="val">254 ms</span></div>
-                        <div class="stat-row"><span>CHAR ENUM</span><span class="val bad">297 ms</span></div>
-                        <div class="stat-row"><span>RESULT</span><span class="val bad">CHAR IS 17% SLOWER</span></div>
-                    </div>
-                </div>
-            </div>
-
-            <div style="margin-top:auto;">
-                <h3>SOURCE REFERENCES:</h3>
-                <ul style="list-style:square; margin-left:1.5rem; line-height:1.6;">
-                    <li><a href="01-axioms-memory.md">01-axioms-memory.md</a></li>
-                    <li><a href="08-benchmark-results-proof.md">08-benchmark-results-proof.md</a></li>
-                    <li><a href="09-pure-move-benchmark.md">09-pure-move-benchmark.md</a></li>
-                </ul>
-            </div>
-        </div>
-
-        <!-- RIGHT PAGE: INVESTIGATION & PROOFS -->
-        <div class="page">
-            <div>
-                <h1>02. The Investigation</h1>
-                <div class="metadata">ANALYSIS: ASSEMBLY, PIPELINE, & STACK SPILLS</div>
-
-                <div class="block">
-                    <h2>[A] THE CMOV vs BRANCH AXIOM</h2>
-                    <p><strong>Axiom:</strong> x86-64 has `cmovne` for 32-bit/64-bit registers, but <strong>NO</strong>
-                        conditional move for 8-bit registers.</p>
-
-                    <div style="display:grid; grid-template-columns:1fr 1fr; gap:1rem; margin-top:0.5rem;">
-                        <div>
-                            <div style="text-decoration:underline;">INT (32-bit)</div>
-                            <pre><code class="language-asm">cmovne %ecx, %eax</code></pre>
-                            <div>> Single Instruction</div>
-                            <div>> No Branch</div>
-                            <div>> No Pipeline Flush</div>
-                        </div>
-                        <div>
-                            <div style="text-decoration:underline;">CHAR (8-bit)</div>
-                            <pre><code class="language-asm">jne .LBB4_6</code></pre>
-                            <div>> BRANCH REQUIRED</div>
-                            <div>> Misprediction Risk</div>
-                            <div>> Pipeline Stalls</div>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="block">
-                    <h2>[B] STACK SPILL PROOF (-O0)</h2>
-                    <p>The compiler runs out of generic registers for 8-bit ops, forcing stack use.</p>
-                    <div class="stat-box">
-                        <div style="margin-bottom:0.5rem; font-weight:bold;">INT ASM (Registers Only):</div>
-                        <pre><code class="language-asm">movl $1, -8(%rbp)   # 1 op (store)
-movl -8(%rbp), %eax # 1 op (load)</code></pre>
-
-                        <div style="margin-bottom:0.5rem; font-weight:bold;">CHAR ASM (Stack Thrashing):</div>
-                        <pre><code class="language-asm">movb %dl, -42(%rbp) # Spill BUY to stack
-movb %al, -41(%rbp) # Spill SELL to stack
-...                 # Branch Logic
-movb -41(%rbp), %al # Reload from stack</code></pre>
-                        <div>> 4 Stack Ops vs 2 Stack Ops</div>
-                        <div>> Unaligned byte access on stack</div>
-                    </div>
-                </div>
-
-                <div class="block">
-                    <h2>[C] THE SIGN-EXTENSION PENALTY</h2>
-                    <pre><code class="language-asm">movsbl -9(%rbp), %eax  # Move with Sign-Extend Byte to Long</code></pre>
-                    <ul style="list-style:square; margin-left:1.5rem;">
-                        <li><strong>Fact:</strong> CPU ALUs operate on native width (32/64 bit).</li>
-                        <li><strong>Cost:</strong> 8-bit values must be promoted (sign-extended) to be useful.</li>
-                        <li><strong>Result:</strong> Extra instruction latency for every single load.</li>
-                    </ul>
-                </div>
-
-                <div class="block">
-                    <h2>[D] CONCLUSION</h2>
-                    <div class="stat-box">
-                        <div>1. <strong>IO:</strong> `char` wins (Function Overloading).</div>
-                        <div>2. <strong>Bandwidth:</strong> `char` wins (-O3, 1 vs 4 bytes).</div>
-                        <div>3. <strong>Pipeline:</strong> `int` wins (-O0, `cmov` vs `branch` + spills).</div>
-                    </div>
-                </div>
-            </div>
-
-            <div style="margin-top:auto;">
-                <h3>DEEP DIVE PROOFS:</h3>
-                <ul style="list-style:square; margin-left:1.5rem; line-height:1.6;">
-                    <li><a href="BRANCH_VS_CMOV_AXIOMS.md">BRANCH_VS_CMOV_AXIOMS.md (Full Branch Analysis)</a></li>
-                    <li><a href="02-assembly-instructions.md">02-assembly-instructions.md</a></li>
-                    <li><a href="05-operator-int-assembly.md">05-operator-int-assembly.md</a></li>
-                    <li><a href="THE_REAL_DIFFERENCE.md">THE_REAL_DIFFERENCE.md</a></li>
-                </ul>
-            </div>
-        </div>
-
+        <p>Array storage:</p>
+        <pre><code class="language-cpp">OrderType arr1[1000];     // 4000 bytes
+OrderType2 arr2[1000];    // 1000 bytes
+// 3000 bytes saved (75% reduction)</code></pre>
     </div>
+
+    <div class="section">
+        <p>test_enum.cpp:</p>
+        <pre><code class="language-cpp">#include &lt;iostream&gt;
+
+enum class OrderType { BUY, SELL };
+enum class OrderType2 : char { BUY='B', SELL='S' };
+
+int main() {
+  OrderType type = OrderType::SELL;
+  OrderType2 type2 = OrderType2::SELL;
+  
+  std::cout &lt;&lt; static_cast&lt;int&gt;(type);
+  std::cout &lt;&lt; static_cast&lt;char&gt;(type2);
+  
+  return 0;
+}</code></pre>
+
+        <p>Assembly generation: <span class="inline">clang++ -std=c++23 -S -O0 test_enum.cpp -o test_enum.s</span></p>
+
+        <p>Generated assembly for <span class="inline">OrderType</span> (int enum):</p>
+        <pre><code class="language-asm">movl    $1, -8(%rbp)              # type = OrderType::SELL (1)</code></pre>
+
+        <p>Generated assembly for <span class="inline">OrderType2</span> (char enum):</p>
+        <pre><code class="language-asm">movb    $83, -9(%rbp)             # type2 = OrderType2::SELL (83)</code></pre>
+
+        <p>Machine code verification: <span class="inline">clang++ -std=c++23 -O0 test_enum.cpp -o test_enum</span></p>
+        <p>Disassembly: <span class="inline">objdump -d test_enum | grep -A10 "main&gt;:"</span></p>
+
+        <pre><code>115f:   c7 45 f8 01 00 00 00    movl   $0x1,-0x8(%rbp)
+1166:   c6 45 f7 53             movb   $0x53,-0x9(%rbp)</code></pre>
+
+        <p>Byte analysis:</p>
+        <table>
+            <tr>
+                <th>Instruction</th>
+                <th>Opcode</th>
+                <th>Addressing</th>
+                <th>Immediate</th>
+                <th>Total Size</th>
+            </tr>
+            <tr>
+                <td><span class="inline">movl</span></td>
+                <td>c7</td>
+                <td>45 f8</td>
+                <td>01 00 00 00 (4 bytes)</td>
+                <td>7 bytes</td>
+            </tr>
+            <tr>
+                <td><span class="inline">movb</span></td>
+                <td>c6</td>
+                <td>45 f7</td>
+                <td>53 (1 byte)</td>
+                <td>4 bytes</td>
+            </tr>
+        </table>
+    </div>
+
+    <div class="section">
+        <p>Enum name verification:</p>
+        <p>Command: <span class="inline">strings test_enum | grep BUY</span></p>
+        <p>Output: (no output)</p>
+        
+        <p>Command: <span class="inline">strings test_enum | grep SELL</span></p>
+        <p>Output: (no output)</p>
+        
+        <p>Command: <span class="inline">nm test_enum | grep -i buy</span></p>
+        <p>Output: (no output)</p>
+        
+        <p>Command: <span class="inline">nm test_enum | grep -i sell</span></p>
+        <p>Output: (no output)</p>
+
+        <p>Assembly verification:</p>
+        <pre><code class="language-asm">movl    $0, -8(%rbp)              # OrderType::BUY becomes numeric 0</code></pre>
+
+        <p>Machine code bytes: <span class="inline">c7 45 f8 00 00 00 00</span> contains <span class="inline">00 00 00 00</span> (numeric 0), not <span class="inline">42 55 59</span> (ASCII "BUY").</p>
+
+        <p>Compiler substitution:</p>
+        <pre><code>Source:     OrderType::BUY
+Compiler:   0
+Assembly:   movl $0, -8(%rbp)
+Machine:    00 00 00 00
+
+Source:     OrderType::SELL
+Compiler:   1
+Assembly:   movl $1, -8(%rbp)
+Machine:    01 00 00 00</code></pre>
+    </div>
+
+    <div class="section">
+        <p>operator&lt;&lt;(int) assembly analysis:</p>
+        <p>Source: <span class="inline">std::cout &lt;&lt; static_cast&lt;int&gt;(type);</span></p>
+        
+        <p>Generated assembly:</p>
+        <pre><code class="language-asm">movl    -8(%rbp), %esi            # Load enum value into register
+movq    _ZSt4cout@GOTPCREL(%rip), %rdi  # Load std::cout address
+callq   _ZNSolsEi@PLT             # Call operator&lt;&lt;(int)</code></pre>
+
+        <p>Symbol demangling: <span class="inline">c++filt _ZNSolsEi</span></p>
+        <pre><code>std::ostream::operator&lt;&lt;(int)</code></pre>
+
+        <p>Machine code: <span class="inline">objdump -d test_enum</span></p>
+        <pre><code>1178:   48 8b 3d 49 2e 00 00    mov    0x2e49(%rip),%rdi
+117f:   e8 bc fe ff ff          call   1040 &lt;_ZNSolsEi@plt&gt;</code></pre>
+
+        <p>x86-64 calling convention:</p>
+        <table>
+            <tr>
+                <th>Register</th>
+                <th>Purpose</th>
+                <th>Value</th>
+            </tr>
+            <tr>
+                <td>%rdi</td>
+                <td>1st parameter</td>
+                <td>this pointer (std::cout address)</td>
+            </tr>
+            <tr>
+                <td>%rsi</td>
+                <td>2nd parameter</td>
+                <td>int value (0 or 1)</td>
+            </tr>
+        </table>
+
+        <p>libstdc++ source: <span class="inline">/usr/include/c++/13/ostream</span> line 191:</p>
+        <pre><code class="language-cpp">operator&lt;&lt;(int __n);</code></pre>
+
+        <p>Implementation performs:</p>
+        <pre><code>1. Sign checking (negative?)
+2. Digit extraction via division
+3. ASCII conversion (digit + '0')
+4. Multiple buffer writes
+5. Complexity: O(log₁₀ n)</code></pre>
+
+        <p>Instruction count:</p>
+        <pre><code>Store enum:        1 instruction (movl)
+Load enum:         1 instruction (movl)
+Load cout:         1 instruction (movq)
+Call operator&lt;&lt;:   1 instruction (callq)
+Inside operator&lt;&lt;: ~50 instructions (int conversion)
+Total:             ~54 instructions</code></pre>
+    </div>
+
+    <div class="section">
+        <p>operator&lt;&lt;(char) assembly analysis:</p>
+        <p>Source: <span class="inline">std::cout &lt;&lt; static_cast&lt;char&gt;(type2);</span></p>
+        
+        <p>Generated assembly:</p>
+        <pre><code class="language-asm">movsbl  -9(%rbp), %esi            # Load char with sign extension
+movq    _ZSt4cout@GOTPCREL(%rip), %rdi  # Load std::cout address
+callq   _ZStlsISt11char_traitsIcEERSt13basic_ostreamIcT_ES5_c@PLT</code></pre>
+
+        <p>Symbol demangling:</p>
+        <pre><code>std::operator&lt;&lt;(std::ostream&, char)</code></pre>
+
+        <p>libstdc++ source: <span class="inline">/usr/include/c++/13/ostream</span> line 570-575:</p>
+        <pre><code class="language-cpp">operator&lt;&lt;(basic_ostream&lt;char, _Traits&gt;& __out, char __c) {
+  if (__out.width() != 0)
+    return __ostream_insert(__out, &__c, 1);
+  __out.put(__c);  // Write byte directly
+  return __out;
+}</code></pre>
+
+        <p>put() implementation line 370:</p>
+        <pre><code class="language-cpp">put(char_type __c) {
+  sputc(__c);  // Write to buffer
+  return *this;
+}</code></pre>
+
+        <p>Execution path:</p>
+        <pre><code>1. Width check (default=0, skip padding)
+2. put(__c) - single byte write
+3. Return stream
+Complexity: O(1)</code></pre>
+
+        <p>Instruction count:</p>
+        <pre><code>Store char:        1 instruction (movb)
+Load char:         1 instruction (movsbl)
+Load cout:         1 instruction (movq)
+Call operator&lt;&lt;:   1 instruction (callq)
+Inside operator&lt;&lt;: ~10 instructions (width check + put)
+Total:             ~14 instructions</code></pre>
+
+        <p>Comparison: <span class="result">14 instructions (char) vs 54 instructions (int), 3.9× fewer</span></p>
+    </div>
+
+    <div class="section">
+        <p>Function call verification:</p>
+        
+        <p>Test code for int:</p>
+        <pre><code class="language-cpp">int x = 1;
+std::cout &lt;&lt; x;</code></pre>
+
+        <p>Assembly shows:</p>
+        <pre><code class="language-asm">callq   _ZNSolsEi@PLT</code></pre>
+
+        <p>Demangled: <span class="inline">std::ostream::operator&lt;&lt;(int)</span></p>
+
+        <p>Test code for char:</p>
+        <pre><code class="language-cpp">char x = 'S';
+std::cout &lt;&lt; x;</code></pre>
+
+        <p>Assembly shows:</p>
+        <pre><code class="language-asm">callq   _ZStlsISt11char_traitsIcEERSt13basic_ostreamIcT_ES5_c@PLT</code></pre>
+
+        <p>Demangled: <span class="inline">std::operator&lt;&lt;(std::ostream&, char)</span></p>
+
+        <p>Two completely different functions. The enum's underlying type determines which overload is selected at compile time.</p>
+    </div>
+
+    <div class="section">
+        <p>enum_benchmark.cpp:</p>
+        <pre><code class="language-cpp">#include &lt;chrono&gt;
+#include &lt;iostream&gt;
+#include &lt;fstream&gt;
+
+enum class OrderType { BUY, SELL };
+enum class OrderType2 : char { BUY='B', SELL='S' };
+
+constexpr char to_char(OrderType o) noexcept {
+  return o == OrderType::BUY ? 'B' : 'S';
+}
+
+void benchmark_int_enum() {
+    auto start = std::chrono::high_resolution_clock::now();
+    
+    std::ofstream null_stream("/dev/null");
+    for (int i = 0; i &lt; 10000000; ++i) {
+        OrderType type = (i & 1) ? OrderType::SELL : OrderType::BUY;
+        null_stream &lt;&lt; static_cast&lt;int&gt;(type);
+    }
+    
+    auto end = std::chrono::high_resolution_clock::now();
+    auto duration = std::chrono::duration_cast&lt;std::chrono::milliseconds&gt;(end - start);
+    std::cout &lt;&lt; "int enum (cast to int): " &lt;&lt; duration.count() &lt;&lt; " ms\n";
+}
+
+void benchmark_int_enum_with_function() {
+    auto start = std::chrono::high_resolution_clock::now();
+    
+    std::ofstream null_stream("/dev/null");
+    for (int i = 0; i &lt; 10000000; ++i) {
+        OrderType type = (i & 1) ? OrderType::SELL : OrderType::BUY;
+        null_stream &lt;&lt; to_char(type);
+    }
+    
+    auto end = std::chrono::high_resolution_clock::now();
+    auto duration = std::chrono::duration_cast&lt;std::chrono::milliseconds&gt;(end - start);
+    std::cout &lt;&lt; "int enum (to_char function): " &lt;&lt; duration.count() &lt;&lt; " ms\n";
+}
+
+void benchmark_char_enum() {
+    auto start = std::chrono::high_resolution_clock::now();
+    
+    std::ofstream null_stream("/dev/null");
+    for (int i = 0; i &lt; 10000000; ++i) {
+        OrderType2 type = (i & 1) ? OrderType2::SELL : OrderType2::BUY;
+        null_stream &lt;&lt; static_cast&lt;char&gt;(type);
+    }
+    
+    auto end = std::chrono::high_resolution_clock::now();
+    auto duration = std::chrono::duration_cast&lt;std::chrono::milliseconds&gt;(end - start);
+    std::cout &lt;&lt; "char enum (direct cast): " &lt;&lt; duration.count() &lt;&lt; " ms\n";
+}
+
+int main() {
+    std::cout &lt;&lt; "Running benchmarks (no optimization)...\n\n";
+    
+    benchmark_int_enum();
+    benchmark_int_enum_with_function();
+    benchmark_char_enum();
+    
+    return 0;
+}</code></pre>
+
+        <p>Compilation: <span class="inline">clang++ -std=c++23 -O0 enum_benchmark.cpp -o enum_benchmark</span></p>
+        <p>Execution: <span class="inline">./enum_benchmark</span></p>
+
+        <p>Run 1:</p>
+        <pre><code>int enum (cast to int): 342 ms
+int enum (to_char function): 103 ms
+char enum (direct cast): 97 ms</code></pre>
+
+        <p>Run 2:</p>
+        <pre><code>int enum (cast to int): 328 ms
+int enum (to_char function): 109 ms
+char enum (direct cast): 93 ms</code></pre>
+
+        <p>Run 3:</p>
+        <pre><code>int enum (cast to int): 335 ms
+int enum (to_char function): 106 ms
+char enum (direct cast): 95 ms</code></pre>
+
+        <p>Statistical analysis:</p>
+        <table>
+            <tr>
+                <th>Method</th>
+                <th>Mean (ms)</th>
+                <th>Std Dev (ms)</th>
+                <th>Variance (%)</th>
+                <th>Per-op (ns)</th>
+            </tr>
+            <tr>
+                <td>int enum</td>
+                <td class="data">335</td>
+                <td>5.7</td>
+                <td>±1.7%</td>
+                <td>33.5</td>
+            </tr>
+            <tr>
+                <td>to_char()</td>
+                <td class="data">106</td>
+                <td>2.5</td>
+                <td>±2.4%</td>
+                <td>10.6</td>
+            </tr>
+            <tr>
+                <td>char enum</td>
+                <td class="data">95</td>
+                <td>1.6</td>
+                <td>±1.7%</td>
+                <td>9.5</td>
+            </tr>
+        </table>
+
+        <p>Speedup calculations:</p>
+        <table>
+            <tr>
+                <th>Comparison</th>
+                <th>Calculation</th>
+                <th>Speedup</th>
+            </tr>
+            <tr>
+                <td>char enum vs int enum</td>
+                <td>335 / 95</td>
+                <td class="result">3.53×</td>
+            </tr>
+            <tr>
+                <td>to_char() vs int enum</td>
+                <td>335 / 106</td>
+                <td class="result">3.16×</td>
+            </tr>
+            <tr>
+                <td>char enum vs to_char()</td>
+                <td>106 / 95</td>
+                <td class="result">1.12×</td>
+            </tr>
+        </table>
+
+        <p>Performance ranking:</p>
+        <pre><code>1. char enum:  95ms  (1-byte storage, direct char output, no conversion)
+2. to_char():  106ms (4-byte storage, function call overhead, char output)
+3. int enum:   335ms (4-byte storage, int-to-string conversion, multiple ops)</code></pre>
+
+        <p>Bottleneck analysis:</p>
+        <pre><code>int enum bottleneck:
+  - int-to-string conversion
+  - Division and modulo operations
+  - ASCII digit generation
+  - Multiple buffer writes
+  - ~54 instructions per operation
+
+to_char() bottleneck:
+  - Function call overhead (~11ms for 10M calls)
+  - Comparison and ternary operator
+  - Still outputs char (fast path)
+
+char enum advantage:
+  - No conversion needed
+  - Single byte write
+  - Minimal instructions (~14 total)
+  - Better cache efficiency</code></pre>
+    </div>
+
+    <div class="section">
+        <p>Summary:</p>
+        <table>
+            <tr>
+                <th>Metric</th>
+                <th>int enum</th>
+                <th>char enum</th>
+                <th>Improvement</th>
+            </tr>
+            <tr>
+                <td>Storage size</td>
+                <td>4 bytes</td>
+                <td>1 byte</td>
+                <td class="result">75% reduction</td>
+            </tr>
+            <tr>
+                <td>Machine code size</td>
+                <td>7 bytes</td>
+                <td>4 bytes</td>
+                <td class="result">43% reduction</td>
+            </tr>
+            <tr>
+                <td>Instruction count</td>
+                <td>~54</td>
+                <td>~14</td>
+                <td class="result">3.9× fewer</td>
+            </tr>
+            <tr>
+                <td>Execution time</td>
+                <td>335ms</td>
+                <td>95ms</td>
+                <td class="result">3.53× faster</td>
+            </tr>
+            <tr>
+                <td>Per-operation cost</td>
+                <td>33.5ns</td>
+                <td>9.5ns</td>
+                <td class="result">24ns saved</td>
+            </tr>
+        </table>
+
+        <p>Verification methods:</p>
+        <pre><code>sizeof() - memory measurement
+Assembly output (-S flag) - instruction analysis
+objdump -d - machine code verification
+strings - binary string search
+nm - symbol table inspection
+std::chrono - timing measurement
+Multiple runs - statistical validation</code></pre>
+
+        <p>Conclusion: <span class="inline">enum class : char</span> with ASCII values provides measurable performance and memory benefits. Measurements verified on x86-64 Linux, Clang 18.1.3, libstdc++ 13.3.0.</p>
+        
+        <p>Critical clarification: The 3.5× speedup is NOT from movb vs movl (that's ~1-2%). The speedup comes from the enum's underlying type determining which operator&lt;&lt; overload is called:</p>
+        <pre><code>int enum → operator&lt;&lt;(int) → int-to-string conversion (~50 instructions)
+char enum → operator&lt;&lt;(char) → direct byte write (~10 instructions)</code></pre>
+        
+        <p>The enum's <span class="inline">: char</span> specification changes compiler overload resolution, selecting a simpler code path. Storage difference (movb vs movl) is secondary benefit.</p>
+    </div>
+
+    <div class="section">
+        <p>References:</p>
+        <table>
+            <tr>
+                <th>File</th>
+                <th>Description</th>
+            </tr>
+            <tr>
+                <td><a href="01-axioms-memory.md">01-axioms-memory.md</a></td>
+                <td>Memory fundamentals and storage axioms</td>
+            </tr>
+            <tr>
+                <td><a href="02-assembly-instructions.md">02-assembly-instructions.md</a></td>
+                <td>Assembly instruction analysis (movl vs movb)</td>
+            </tr>
+            <tr>
+                <td><a href="03-enum-storage-proof.md">03-enum-storage-proof.md</a></td>
+                <td>Enum storage size verification</td>
+            </tr>
+            <tr>
+                <td><a href="04-name-disappearance-proof.md">04-name-disappearance-proof.md</a></td>
+                <td>Proof that enum names don't exist in binary</td>
+            </tr>
+            <tr>
+                <td><a href="05-operator-int-assembly.md">05-operator-int-assembly.md</a></td>
+                <td>operator&lt;&lt;(int) assembly and libstdc++ analysis</td>
+            </tr>
+            <tr>
+                <td><a href="06-operator-char-assembly.md">06-operator-char-assembly.md</a></td>
+                <td>operator&lt;&lt;(char) assembly and libstdc++ analysis</td>
+            </tr>
+            <tr>
+                <td><a href="07-benchmark-methodology.md">07-benchmark-methodology.md</a></td>
+                <td>Benchmark design and methodology</td>
+            </tr>
+            <tr>
+                <td><a href="08-benchmark-results-proof.md">08-benchmark-results-proof.md</a></td>
+                <td>Complete benchmark results and statistical analysis</td>
+            </tr>
+            <tr>
+                <td><a href="merged-analysis.md">merged-analysis.md</a></td>
+                <td>Complete analysis in dense format (all proofs merged)</td>
+            </tr>
+            <tr>
+                <td><a href="complete-analysis.md">complete-analysis.md</a></td>
+                <td>Full detailed analysis with explanations</td>
+            </tr>
+            <tr>
+                <td><a href="THE_REAL_DIFFERENCE.md">THE_REAL_DIFFERENCE.md</a></td>
+                <td>Explanation: movb vs movl vs function selection</td>
+            </tr>
+            <tr>
+                <td><a href="EXECUTION_TRACE.md">EXECUTION_TRACE.md</a></td>
+                <td>Complete step-by-step execution trace with line numbers</td>
+            </tr>
+            <tr>
+                <td><a href="VERIFICATION.md">VERIFICATION.md</a></td>
+                <td>Verification of all claims with actual command output</td>
+            </tr>
+            <tr>
+                <td><a href="FINAL_ANSWER.md">FINAL_ANSWER.md</a></td>
+                <td>Summary: What the enum actually does and why it matters</td>
+            </tr>
+            <tr>
+                <td><a href="ERRORS.md">ERRORS.md</a></td>
+                <td>Common misconceptions and what movb vs movl actually does</td>
+            </tr>
+            <tr>
+                <td><a href="PURE_ENUM_ANALYSIS.md">PURE_ENUM_ANALYSIS.md</a></td>
+                <td>Surprising result: char enum slower without cout (15-20%)</td>
+            </tr>
+            <tr>
+                <td><a href="BRANCH_VS_CMOV_AXIOMS.md">BRANCH_VS_CMOV_AXIOMS.md</a></td>
+                <td>Axiomatic derivation: why compiler uses branch vs conditional move</td>
+            </tr>
+            <tr>
+                <td><a href="SURPRISE_REPORT.md">SURPRISE_REPORT.md</a></td>
+                <td>Complete report: char enum 17% slower without cout, verified with benchmarks</td>
+            </tr>
+        </table>
+    </div>
+
     <script>hljs.highlightAll();</script>
 </body>
-
 </html>
