@@ -2,12 +2,15 @@
 
 Repository: https://github.com/raikrahul/raikrahul.github.io
 Branch: main
-Commit: 1edfc17
+Commit: 3043fba
+Status: LIVE ✓
 
 ## Live URLs
 
 Main page: https://raikrahul.github.io/cpp-enums/index.html
 Homepage link: https://raikrahul.github.io (see Projects section)
+
+Status verified: HTTP 200
 
 Documentation:
 - https://raikrahul.github.io/cpp-enums/README.md
