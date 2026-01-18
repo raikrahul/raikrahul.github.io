@@ -1,0 +1,4 @@
+enum_storage
+enum_benchmark
+test_enum
+*.o
