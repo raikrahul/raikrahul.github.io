@@ -111,11 +111,20 @@
 
         /* UTILS */
         .code-label {
+            display: inline-block;
             font-size: 10px;
             color: var(--dim);
             text-transform: uppercase;
             letter-spacing: 1px;
             margin-bottom: 0.2rem;
+        }
+
+        .code-link {
+            font-size: 10px;
+            color: var(--fg);
+            text-decoration: underline;
+            margin-left: 0.5rem;
+            cursor: pointer;
         }
 
         .arrow {
@@ -131,6 +140,34 @@
             text-align: center;
             font-weight: bold;
             margin-top: 2rem;
+        }
+
+        /* LINKS SECTION */
+        .links-section {
+            margin-top: 4rem;
+            border-top: 1px dotted var(--dim);
+            padding-top: 2rem;
+        }
+
+        .link-list {
+            list-style: square;
+            margin-left: 2rem;
+        }
+
+        .link-list li {
+            margin-bottom: 0.5rem;
+        }
+
+        .link-list a {
+            color: var(--fg);
+            text-decoration: underline;
+            font-weight: bold;
+        }
+
+        .link-list a:hover {
+            background: var(--fg);
+            color: var(--bg);
+            text-decoration: none;
         }
 
         @media(max-width: 1100px) {
@@ -155,7 +192,9 @@
             <div class="module">
                 <div class="module-header">AXIOM 0x00: SIZE DEFINITION</div>
 
-                <div class="code-label">CODE (enum_storage.cpp)</div>
+                <div class="code-label">CODE </div><a
+                    href="https://github.com/raikrahul/raikrahul.github.io/blob/main/cpp-enums/enum_storage.cpp"
+                    class="code-link">(enum_storage.cpp)</a>
                 <pre><code class="language-cpp">enum class OrderType        { BUY, SELL }; // Default
 enum class OrderType2 : char{ BUY, SELL }; // Explicit char
 
@@ -169,8 +208,7 @@ std::cout << sizeof(OrderType2);</code></pre>
 sizeof(OrderType2): 1</code></pre>
 
                 <div class="stat-box">
-                    <div class="stat-row"><span>FACT:</span><span class="val">Explicit char reduces size by 75%</span>
-                    </div>
+                    <div class="stat-row"><span>FACT: Explicit char reduces size by 75%</span></div>
                 </div>
             </div>
 
@@ -178,7 +216,9 @@ sizeof(OrderType2): 1</code></pre>
             <div class="module">
                 <div class="module-header">AXIOM 0x02: I/O PATH (INT)</div>
 
-                <div class="code-label">CODE (test_cout_int.cpp)</div>
+                <div class="code-label">CODE </div><a
+                    href="https://github.com/raikrahul/raikrahul.github.io/blob/main/cpp-enums/test_cout_int.cpp"
+                    class="code-link">(test_cout_int.cpp)</a>
                 <pre><code class="language-cpp">OrderType type = OrderType::SELL;
 std::cout << static_cast<int>(type);</code></pre>
 
@@ -189,10 +229,9 @@ movl -8(%rbp), %esi             # Load to ARG2
 callq _ZNSolsEi@PLT             # Call operator<<(int)</code></pre>
 
                 <div class="stat-box">
-                    <div class="stat-row"><span>TARGET:</span><span class="val">std::ostream::operator<<(int)< /span>
+                    <div class="stat-row"><span>TARGET: std::ostream::operator<<(int)< /span>
                     </div>
-                    <div class="stat-row"><span>COMPLEXITY:</span><span class="val">HIGH (Formatting, Sign Check)</span>
-                    </div>
+                    <div class="stat-row"><span>COMPLEXITY: HIGH (Formatting, Sign Check)</span></div>
                 </div>
             </div>
 
@@ -200,7 +239,9 @@ callq _ZNSolsEi@PLT             # Call operator<<(int)</code></pre>
             <div class="module">
                 <div class="module-header">AXIOM 0x04: LOGIC PATH (INT)</div>
 
-                <div class="code-label">CODE (test_cmov.cpp)</div>
+                <div class="code-label">CODE </div><a
+                    href="https://github.com/raikrahul/raikrahul.github.io/blob/main/cpp-enums/test_cmov.cpp"
+                    class="code-link">(test_cmov.cpp)</a>
                 <pre><code class="language-cpp">OrderType type = (i & 1) ? SELL : BUY;
 // TERNARY OPERATOR using INTs</code></pre>
 
@@ -210,9 +251,8 @@ callq _ZNSolsEi@PLT             # Call operator<<(int)</code></pre>
 cmovnel %ecx, %eax      # CONDITIONAL MOVE</code></pre>
 
                 <div class="stat-box">
-                    <div class="stat-row"><span>INSTRUCTION:</span><span class="val">cmovnel (32-bit)</span></div>
-                    <div class="stat-row"><span>BRANCHES:</span><span class="val">0</span></div>
-                    <div class="stat-row"><span>SPILLS:</span><span class="val">0</span></div>
+                    <div class="stat-row"><span>INSTRUCTION: cmovnel (32-bit)</span></div>
+                    <div class="stat-row"><span>BRANCHES: 0 | SPILLS: 0</span></div>
                 </div>
             </div>
 
@@ -235,7 +275,7 @@ cmovnel %ecx, %eax      # CONDITIONAL MOVE</code></pre>
             <div class="module">
                 <div class="module-header">AXIOM 0x01: MEMORY STORAGE</div>
 
-                <div class="code-label">CODE (Assignment)</div>
+                <div class="code-label">CODE </div>
                 <pre><code class="language-cpp">OrderType  a = OrderType::SELL;  // int
 OrderType2 b = OrderType2::SELL; // char</code></pre>
 
@@ -248,8 +288,7 @@ OrderType2 b = OrderType2::SELL; // char</code></pre>
                 <pre><code class="language-asm">movb $83, -9(%rbp)    # 8-bit Move</code></pre>
 
                 <div class="stat-box">
-                    <div class="stat-row"><span>FACT:</span><span class="val">Instruction width matches type size</span>
-                    </div>
+                    <div class="stat-row"><span>FACT: Instruction width matches type size</span></div>
                 </div>
             </div>
 
@@ -257,7 +296,9 @@ OrderType2 b = OrderType2::SELL; // char</code></pre>
             <div class="module">
                 <div class="module-header">AXIOM 0x03: I/O PATH (CHAR)</div>
 
-                <div class="code-label">CODE (test_cout_char.cpp)</div>
+                <div class="code-label">CODE </div><a
+                    href="https://github.com/raikrahul/raikrahul.github.io/blob/main/cpp-enums/test_cout_char.cpp"
+                    class="code-link">(test_cout_char.cpp)</a>
                 <pre><code class="language-cpp">OrderType2 type = OrderType2::SELL;
 std::cout << static_cast<char>(type);</code></pre>
 
@@ -268,10 +309,9 @@ movsbl -5(%rbp), %esi           # Sign Extend
 callq _ZStls..._c@PLT           # Call operator<<(char)</code></pre>
 
                 <div class="stat-box">
-                    <div class="stat-row"><span>TARGET:</span><span class="val">std::operator<<(char)< /span>
+                    <div class="stat-row"><span>TARGET: std::operator<<(char)< /span>
                     </div>
-                    <div class="stat-row"><span>COMPLEXITY:</span><span class="val">LOW (Direct Buffer Write)</span>
-                    </div>
+                    <div class="stat-row"><span>COMPLEXITY: LOW (Direct Buffer Write)</span></div>
                 </div>
             </div>
 
@@ -279,7 +319,9 @@ callq _ZStls..._c@PLT           # Call operator<<(char)</code></pre>
             <div class="module">
                 <div class="module-header">AXIOM 0x05: LOGIC PATH (CHAR)</div>
 
-                <div class="code-label">CODE (test_cmov.cpp)</div>
+                <div class="code-label">CODE </div><a
+                    href="https://github.com/raikrahul/raikrahul.github.io/blob/main/cpp-enums/test_cmov.cpp"
+                    class="code-link">(test_cmov.cpp)</a>
                 <pre><code class="language-cpp">OrderType2 type = (i & 1) ? SELL : BUY;
 // TERNARY OPERATOR using CHARs</code></pre>
 
@@ -292,9 +334,8 @@ jne .LBB1_2             # JUMP (Branch)
 movb -5(%rbp), %al      # RELOAD from stack</code></pre>
 
                 <div class="stat-box">
-                    <div class="stat-row"><span>INSTRUCTION:</span><span class="val">jne (Branch)</span></div>
-                    <div class="stat-row"><span>BRANCHES:</span><span class="val">1 (Risk of stall)</span></div>
-                    <div class="stat-row"><span>SPILLS:</span><span class="val">4 (Memory Access)</span></div>
+                    <div class="stat-row"><span>INSTRUCTION: jne (Branch)</span></div>
+                    <div class="stat-row"><span>BRANCHES: 1 (Risk of stall) | SPILLS: 4</span></div>
                 </div>
             </div>
 
@@ -316,6 +357,22 @@ movb -5(%rbp), %al      # RELOAD from stack</code></pre>
         <h2>ROOT CAUSE ANALYSIS</h2>
         <p>x86-64 has `cmov` for 32-bit registers but NOT for 8-bit registers.</p>
         <p>When using `char` enums for logic, the compiler falls back to Branch + Stack Spills.</p>
+    </div>
+
+    <!-- LINKS / APPENDIX -->
+    <div class="links-section">
+        <h1>AXIOM 0xFF: APPENDIX & DERIVATIONS</h1>
+        <ul class="link-list">
+            <li><a href="SURPRISE_REPORT.md">SURPRISE_REPORT.md (Full Investigation Report)</a></li>
+            <li><a href="BRANCH_VS_CMOV_AXIOMS.md">BRANCH_VS_CMOV_AXIOMS.md (Logic Derivation)</a></li>
+            <li><a href="09-pure-move-benchmark.md">09-pure-move-benchmark.md (Unoptimized Benchmark)</a></li>
+            <li><a href="08-benchmark-results-proof.md">08-benchmark-results-proof.md (Original Proofs)</a></li>
+            <li><a href="https://github.com/raikrahul/raikrahul.github.io/blob/main/cpp-enums/pure_enum_test.cpp">pure_enum_test.cpp
+                    (Source)</a></li>
+        </ul>
+        <div style="text-align:center; font-size:10px; color:#666; margin-top:1rem;">
+            GENERATED BY ANTIGRAVITY | SYSTEMS ENGINEERING 2026
+        </div>
     </div>
 
     <script>hljs.highlightAll();</script>
