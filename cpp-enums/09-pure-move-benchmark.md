@@ -1,7 +1,4 @@
----
-title: Pure Move Benchmark (No IO)
-description: Analysis of raw memory move performance for int vs char enums
----
+
 
 # Pure Move Benchmark: The "Natural Width" Surprise
 
