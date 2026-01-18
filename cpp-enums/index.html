@@ -4,17 +4,16 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ENUM_CLASS_PERF_ANALYSIS_V1</title>
-    <link rel="stylesheet"
-        href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/atom-one-dark.min.css">
+    <title>ENUM_CLASS_PERF_ANALYSIS_V2</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/bw.min.css">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
     <style>
+        /* BASE LAYER */
         :root {
-            --bg: #050505;
-            --fg: #d4d4d4;
-            --acc: #00ff41;
-            --dim: #666;
-            --brd: #333;
+            --bg: #000000;
+            --fg: #ffffff;
+            --brd: #ffffff;
+            --dim: #666666;
         }
 
         * {
@@ -26,79 +25,103 @@
         body {
             background: var(--bg);
             color: var(--fg);
-            font-family: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, monospace;
-            font-size: 13px;
-            line-height: 1.4;
-            padding: 2rem;
-            max-width: 1400px;
-            margin: 0 auto;
+            font-family: "Courier New", Courier, monospace;
+            font-size: 14px;
+            line-height: 1.3;
+            height: 100vh;
+            overflow-y: auto;
         }
 
-        /* Layout */
-        .grid {
+        /* LAYOUT: BOOK SPREAD */
+        .container {
             display: grid;
+            grid-template-columns: 1fr 1fr;
+            min-height: 100vh;
+            border: 4px solid var(--brd);
+        }
+
+        .page {
+            padding: 2rem;
+            display: flex;
+            flex-direction: column;
             gap: 2rem;
         }
 
-        .row {
-            display: grid;
-            grid-template-columns: 1fr;
-            gap: 1rem;
-            border-left: 1px solid var(--brd);
-            padding-left: 1rem;
-            margin-bottom: 2rem;
+        .page-left {
+            border-right: 2px solid var(--brd);
         }
 
-        @media(min-width: 1000px) {
-            .row {
-                grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+        /* MOBILE OVERRIDE */
+        @media(max-width: 1100px) {
+            .container {
+                grid-template-columns: 1fr;
+                border: none;
+            }
+
+            .page-left {
+                border-right: none;
+                border-bottom: 2px solid var(--brd);
             }
         }
 
-        /* Typography */
+        /* COMPONENTS */
         h1 {
-            font-size: 14px;
-            color: var(--acc);
-            border-bottom: 1px solid var(--brd);
-            padding-bottom: 0.5rem;
-            margin-bottom: 1.5rem;
+            font-size: 24px;
             text-transform: uppercase;
-            letter-spacing: 1px;
+            font-weight: bold;
+            margin-bottom: 1rem;
+            border-bottom: 4px double var(--fg);
+            padding-bottom: 0.5rem;
         }
 
-        .label {
-            color: var(--dim);
-            font-size: 11px;
+        h2 {
+            font-size: 16px;
             text-transform: uppercase;
+            background: var(--fg);
+            color: var(--bg);
+            padding: 0.2rem 0.5rem;
+            margin-bottom: 1rem;
+            display: inline-block;
+            font-weight: bold;
+        }
+
+        .block {
+            margin-bottom: 1.5rem;
+        }
+
+        .stat-box {
+            border: 1px solid var(--fg);
+            padding: 1rem;
+            margin-top: 0.5rem;
+        }
+
+        .stat-row {
+            display: flex;
+            justify-content: space-between;
             margin-bottom: 0.5rem;
-            display: block;
+            border-bottom: 1px dotted var(--dim);
+            padding-bottom: 0.2rem;
+        }
+
+        .stat-row:last-child {
+            border-bottom: none;
+            margin-bottom: 0;
         }
 
         .val {
-            color: var(--acc);
+            font-weight: bold;
         }
 
-        .err {
-            color: #ff5555;
+        .bad {
+            text-decoration: underline;
+            text-decoration-style: double;
         }
 
-        a {
-            color: var(--fg);
-            text-decoration: none;
-            border-bottom: 1px dotted var(--dim);
-        }
-
-        a:hover {
-            color: var(--acc);
-            border-bottom-style: solid;
-        }
-
-        /* Code */
+        /* CODE */
         pre {
-            background: #000;
-            border: 1px solid var(--brd);
-            padding: 0.8rem;
-            overflow-x: auto;
+            border: 1px solid var(--dim);
+            padding: 0.5rem;
+            font-size: 12px;
             margin-bottom: 1rem;
         }
 
@@ -106,266 +129,163 @@
             font-family: inherit;
         }
 
-        .inline {
-            background: #1a1a1a;
-            padding: 0.1em 0.3em;
-            border-radius: 2px;
-            color: #fff;
+        /* LINKS */
+        a {
+            color: var(--fg);
+            text-decoration: underline;
         }
 
-        /* Tables */
-        table {
-            width: 100%;
-            border-collapse: collapse;
-            font-size: 12px;
+        a:hover {
+            background: var(--fg);
+            color: var(--bg);
+            text-decoration: none;
         }
 
-        th,
-        td {
-            text-align: left;
-            padding: 0.5rem;
-            border-bottom: 1px solid #222;
-        }
-
-        th {
+        .metadata {
+            font-size: 10px;
             color: var(--dim);
-            font-weight: normal;
-        }
-
-        tr:hover td {
-            background: #0a0a0a;
-        }
-
-        /* Status Blocks */
-        .stat-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
-            gap: 1px;
-            background: var(--brd);
-            border: 1px solid var(--brd);
-            margin-bottom: 1rem;
-        }
-
-        .stat-item {
-            background: var(--bg);
-            padding: 0.8rem;
-        }
-
-        .stat-v {
-            font-size: 18px;
-            color: #fff;
-            margin-bottom: 0.2rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 2rem;
         }
     </style>
 </head>
 
 <body>
 
-    <div style="margin-bottom: 2rem; border-bottom: 1px solid var(--brd); padding-bottom: 1rem;">
-        <span class="label">TARGET</span>
-        <div style="font-size: 16px; font-weight: bold; color: #fff;">ENUM_CLASS_PERF_ANALYSIS</div>
-        <div style="margin-top: 0.5rem; font-size: 12px; color: var(--dim);">
-            ARCH: x86_64 | OS: Linux | COMPILER: Clang 18.1.3 | LIBC++: 13.3.0
-        </div>
-    </div>
+    <div class="container">
 
-    <!-- 01 STORAGE -->
-    <div class="row">
-        <div>
-            <span class="label">[0x00] MEMORY_LAYOUT</span>
-            <pre><code class="language-cpp">enum class OrderType        { BUY, SELL }; // Default: int
-enum class OrderType2 : char{ BUY, SELL }; // Explicit: char</code></pre>
+        <!-- LEFT PAGE: THE OBSERVATION (DATA) -->
+        <div class="page page-left">
+            <div>
+                <h1>01. The Observation</h1>
+                <div class="metadata">TARGET: x86_64-LINUX-GNU | CLANG 18.1.3 (-std=c++23)</div>
 
-            <span class="label">SIZEOF_VERIFICATION</span>
-            <div class="stat-grid">
-                <div class="stat-item">
-                    <div class="label">sizeof(int)</div>
-                    <div class="stat-v">4 B</div>
+                <div class="block">
+                    <h2>[A] THE CODE</h2>
+                    <pre><code class="language-cpp">enum class OrderType        { BUY, SELL }; // 4 Bytes (int)
+enum class OrderType2 : char{ BUY, SELL }; // 1 Byte  (char)
+
+// BENCHMARK 1: Printing (std::cout)
+cout &lt;&lt; static_cast&lt;int&gt;(type);
+cout &lt;&lt; static_cast&lt;char&gt;(type2);
+
+// BENCHMARK 2: Pure Move (volatile write)
+sink_int = static_cast&lt;int&gt;(type);
+sink_char = static_cast&lt;char&gt;(type2);</code></pre>
                 </div>
-                <div class="stat-item">
-                    <div class="label">sizeof(char)</div>
-                    <div class="stat-v">1 B</div>
-                </div>
-                <div class="stat-item">
-                    <div class="label">DELTA</div>
-                    <div class="stat-v val">-75%</div>
-                </div>
-            </div>
 
-            <span class="label">ARRAY_1000_ELEMENTS</span>
-            <div class="stat-grid">
-                <div class="stat-item">
-                    <div class="label">OrderType[]</div>
-                    <div class="stat-v">4000 B</div>
-                </div>
-                <div class="stat-item">
-                    <div class="label">OrderType2[]</div>
-                    <div class="stat-v">1000 B</div>
-                </div>
-            </div>
-        </div>
-        <div>
-            <span class="label">[0x01] ASM_GENERATION (O0)</span>
-            <pre><code class="language-asm"># OrderType (int)
-movl    $1, -8(%rbp)        # 32-bit move
-# Machine Code: c7 45 f8 01 00 00 00 (7 bytes)
-
-# OrderType2 (char)
-movb    $83, -9(%rbp)       # 8-bit move
-# Machine Code: c6 45 f7 53 (4 bytes)</code></pre>
-            <div style="color: var(--dim);">
-                > strings binary | grep BUY -> NULL<br>
-                > nm binary | grep BUY -> NULL<br>
-                ∴ Names stripped at compile time.
-            </div>
-        </div>
-    </div>
-
-    <!-- 02 IO PATH -->
-    <div class="row">
-        <div>
-            <span class="label">[0x02] IO_PATH_ANALYSIS (std::cout)</span>
-            <pre><code class="language-cpp">std::cout << static_cast<int>(type);  // Path A
-std::cout << static_cast<char>(type); // Path B</code></pre>
-        </div>
-        <div>
-            <span class="label">ASM_BRANCHING</span>
-            <pre><code class="language-asm"># Path A (int) -> COMPLEX
-callq _ZNSolsEi@PLT  # std::ostream::operator<<(int)
-# Ops: SignChk -> Div -> Mod -> ASCII -> Buffer
-# Count: ~50 Instr
-
-# Path B (char) -> DIRECT
-callq _...char_traits... # std::ostream::operator<<(char)
-# Ops: BufferWrite
-# Count: ~14 Instr</code></pre>
-        </div>
-    </div>
-
-    <!-- 03 BENCHMARKS -->
-    <div class="row">
-        <div>
-            <span class="label">[0x03] BENCHMARK_IO (10M OPS)</span>
-            <table>
-                <thead>
-                    <tr>
-                        <th>METHOD</th>
-                        <th>TIME</th>
-                        <th>SPEEDUP</th>
-                        <th>NOTES</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    <tr>
-                        <td>int enum</td>
-                        <td>335 ms</td>
-                        <td>1.0x</td>
-                        <td>int->text conversion</td>
-                    </tr>
-                    <tr>
-                        <td>to_char()</td>
-                        <td>106 ms</td>
-                        <td>3.1x</td>
-                        <td>fn_call overhead</td>
-                    </tr>
-                    <tr>
-                        <td class="val">char enum</td>
-                        <td class="val">95 ms</td>
-                        <td class="val">3.5x</td>
-                        <td>direct byte write</td>
-                    </tr>
-                </tbody>
-            </table>
-        </div>
-        <div>
-            <span class="label">[0x04] BENCHMARK_PURE_MOVE (NO IO)</span>
-
-            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
-                <div>
-                    <span class="label">OPTIMIZED (-O3)</span>
-                    <div class="stat-grid" style="grid-template-columns: 1fr;">
-                        <div class="stat-item">
-                            <div class="label">INT</div>
-                            <div class="stat-v">33 ms</div>
-                        </div>
-                        <div class="stat-item">
-                            <div class="label">CHAR</div>
-                            <div class="stat-v val">25 ms</div>
-                        </div>
+                <div class="block">
+                    <h2>[B] IO BENCHMARK (10M OPS)</h2>
+                    <div class="stat-box">
+                        <div class="stat-row"><span>INT ENUM</span><span class="val">335 ms</span></div>
+                        <div class="stat-row"><span>CHAR ENUM</span><span class="val">95 ms</span></div>
+                        <div class="stat-row"><span>RESULT</span><span class="val">CHAR IS 3.5x FASTER</span></div>
                     </div>
                 </div>
-                <div>
-                    <span class="label">DEBUG (-O0)</span>
-                    <div class="stat-grid" style="grid-template-columns: 1fr;">
-                        <div class="stat-item">
-                            <div class="label">INT</div>
-                            <div class="stat-v val">254 ms</div>
-                        </div>
-                        <div class="stat-item">
-                            <div class="label">CHAR</div>
-                            <div class="stat-v err">297 ms</div>
-                        </div>
+
+                <div class="block">
+                    <h2>[C] PURE MOVE BENCHMARK (NO IO)</h2>
+                    <p style="margin-bottom:0.5rem; font-style:italic;">With optimization (-O3):</p>
+                    <div class="stat-box">
+                        <div class="stat-row"><span>INT (-O3)</span><span class="val">33 ms</span></div>
+                        <div class="stat-row"><span>CHAR (-O3)</span><span class="val">25 ms</span></div>
+                        <div class="stat-row"><span>RESULT</span><span class="val">CHAR IS 1.3x FASTER</span></div>
+                    </div>
+
+                    <p style="margin-top:1rem; margin-bottom:0.5rem; font-style:italic;">Without optimization (-O0) [THE
+                        ANOMALY]:</p>
+                    <div class="stat-box" style="border: 2px solid white;">
+                        <div class="stat-row"><span>INT (-O0)</span><span class="val">254 ms</span></div>
+                        <div class="stat-row"><span>CHAR (-O0)</span><span class="val bad">297 ms</span></div>
+                        <div class="stat-row"><span>RESULT</span><span class="val bad">CHAR IS ~17% SLOWER</span></div>
                     </div>
                 </div>
             </div>
-            <div style="margin-top:0.5rem; color: var(--dim); font-size: 11px;">
-                > O0 ANOMALY: 32-bit is native width. 8-bit requires `movsbl` (sign-ext) penalty in debug.<br>
-                > O3 RESULT: 1-byte write < 4-byte write (Bandwidth wins). </div>
+
+            <div style="margin-top:auto;">
+                <h3>SOURCE REFERENCES:</h3>
+                <ul style="list-style:square; margin-left:1.5rem; line-height:1.6;">
+                    <li><a href="01-axioms-memory.md">01-axioms-memory.md</a></li>
+                    <li><a href="08-benchmark-results-proof.md">08-benchmark-results-proof.md</a></li>
+                    <li><a href="09-pure-move-benchmark.md">09-pure-move-benchmark.md</a></li>
+                </ul>
             </div>
         </div>
 
-        <!-- 04 FILES -->
-        <div>
-            <span class="label">[0x05] SOURCE_TREE</span>
-            <table>
-                <tr>
-                    <td><a href="01-axioms-memory.md">01-axioms-memory.md</a></td>
-                    <td>Storage proofs</td>
-                </tr>
-                <tr>
-                    <td><a href="02-assembly-instructions.md">02-assembly-instructions.md</a></td>
-                    <td>Instruction set verification</td>
-                </tr>
-                <tr>
-                    <td><a href="03-enum-storage-proof.md">03-enum-storage-proof.md</a></td>
-                    <td>Size verification</td>
-                </tr>
-                <tr>
-                    <td><a href="04-name-disappearance-proof.md">04-name-disappearance-proof.md</a></td>
-                    <td>Symbol table analysis</td>
-                </tr>
-                <tr>
-                    <td><a href="05-operator-int-assembly.md">05-operator-int-assembly.md</a></td>
-                    <td>ostream::int disasm</td>
-                </tr>
-                <tr>
-                    <td><a href="06-operator-char-assembly.md">06-operator-char-assembly.md</a></td>
-                    <td>ostream::char disasm</td>
-                </tr>
-                <tr>
-                    <td><a href="07-benchmark-methodology.md">07-benchmark-methodology.md</a></td>
-                    <td>Methodology</td>
-                </tr>
-                <tr>
-                    <td><a href="08-benchmark-results-proof.md">08-benchmark-results-proof.md</a></td>
-                    <td>Statistical proof</td>
-                </tr>
-                <tr>
-                    <td><a href="09-pure-move-benchmark.md">09-pure-move-benchmark.md</a></td>
-                    <td>Pure memory bench (No IO)</td>
-                </tr>
-                <tr>
-                    <td><a href="BRANCH_VS_CMOV_AXIOMS.md">BRANCH_VS_CMOV_AXIOMS.md</a></td>
-                    <td>Branch prediction axioms</td>
-                </tr>
-                <tr>
-                    <td><a href="ERRORS.md">ERRORS.md</a></td>
-                    <td>Common misconceptions</td>
-                </tr>
-            </table>
+        <!-- RIGHT PAGE: THE INVESTIGATION (PROOF) -->
+        <div class="page">
+            <div>
+                <h1>02. The Investigation</h1>
+                <div class="metadata">ANALYSIS: ASSEMBLY & LIBSTDC++ SOURCE</div>
+
+                <div class="block">
+                    <h2>[A] WHY CHAR WINS IO (3.5x)</h2>
+                    <p>It is NOT about size. It is about Function Overloading.</p>
+                    <div style="display:grid; grid-template-columns:1fr 1fr; gap:1rem; margin-top:1rem;">
+                        <div>
+                            <div style="text-decoration:underline;">INT PATH</div>
+                            <pre><code class="language-asm">call operator&lt;&lt;(int)</code></pre>
+                            <ul>
+                                <li>Sign Check</li>
+                                <li>Integer Division (expensive)</li>
+                                <li>Modulo 10</li>
+                                <li>ASCII Conversion</li>
+                            </ul>
+                        </div>
+                        <div>
+                            <div style="text-decoration:underline;">CHAR PATH</div>
+                            <pre><code class="language-asm">call operator&lt;&lt;(char)</code></pre>
+                            <ul>
+                                <li>Buffer Check</li>
+                                <li>MOV Byte</li>
+                                <li>DONE</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="block">
+                    <h2>[B] WHY CHAR LOSES PURE MOVE (-O0)</h2>
+                    <p>The "Natural Width" Penalty. CPU prefers 32/64-bit.</p>
+
+                    <div class="stat-box">
+                        <div style="margin-bottom:0.5rem; font-weight:bold;">INT ASM (CLEAN):</div>
+                        <pre><code class="language-asm">movl $1, -8(%rbp)    # Store 32-bit
+movl -8(%rbp), %eax  # Load 32-bit</code></pre>
+
+                        <div style="margin-bottom:0.5rem; font-weight:bold;">CHAR ASM (DIRTY):</div>
+                        <pre><code class="language-asm">movb $83, -9(%rbp)   # Store 8-bit
+movsbl -9(%rbp), %eax # PENALTY! Sign-Extend</code></pre>
+                        <div><small>MOVSBL (Move with Sign-Extend Byte to Long) is required to safely promote 8-bit to
+                                32-bit register for operations.</small></div>
+                    </div>
+                </div>
+
+                <div class="block">
+                    <h2>[C] WHY CHAR WINS PURE MOVE (-O3)</h2>
+                    <p>Memory Bandwidth Axiom.</p>
+                    <div class="stat-box">
+                        <div class="stat-row"><span>INT WRITE</span><span class="val">4 BYTES per op</span></div>
+                        <div class="stat-row"><span>CHAR WRITE</span><span class="val">1 BYTE per op</span></div>
+                        <div class="stat-row"><span>CACHE PRESS.</span><span class="val">CHAR = 25% OF INT</span></div>
+                    </div>
+                </div>
+            </div>
+
+            <div style="margin-top:auto;">
+                <h3>DEEP DIVE PROOFS:</h3>
+                <ul style="list-style:square; margin-left:1.5rem; line-height:1.6;">
+                    <li><a href="02-assembly-instructions.md">02-assembly-instructions.md</a></li>
+                    <li><a href="05-operator-int-assembly.md">05-operator-int-assembly.md</a></li>
+                    <li><a href="06-operator-char-assembly.md">06-operator-char-assembly.md</a></li>
+                    <li><a href="BRANCH_VS_CMOV_AXIOMS.md">BRANCH_VS_CMOV_AXIOMS.md</a></li>
+                </ul>
+            </div>
         </div>
 
-        <script>hljs.highlightAll();</script>
+    </div>
+    <script>hljs.highlightAll();</script>
 </body>
 
 </html>
