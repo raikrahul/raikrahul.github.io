@@ -140,7 +140,8 @@ int main() {
 sizeof(OrderType2): 1</code></pre>
 
         <p>Verification: <span class="inline">enum class</span> defaults to <span class="inline">int</span> (4 bytes),
-            <span class="inline">enum class : char</span> uses 1 byte.</p>
+            <span class="inline">enum class : char</span> uses 1 byte.
+        </p>
 
         <p>ASCII verification:</p>
         <pre><code class="language-cpp">std::cout &lt;&lt; static_cast&lt;int&gt;('B') &lt;&lt; "\n";  // outputs: 66
@@ -398,7 +399,10 @@ Surprise:  char is ~17% SLOWER</code></pre>
                 class="inline">char</span> is 1.3x faster (Bandwidth) or even slower (Pipeline friction).</p>
     </div>
 
-    <pre><code class="language-cpp">#include &lt;chrono&gt;
+    <div class="section">
+        <p>Benchmark Code:</p>
+
+        <pre><code class="language-cpp">#include &lt;chrono&gt;
 #include &lt;iostream&gt;
 #include &lt;fstream&gt;
 
@@ -461,87 +465,87 @@ int main() {
     return 0;
 }</code></pre>
 
-    <p>Compilation: <span class="inline">clang++ -std=c++23 -O0 enum_benchmark.cpp -o enum_benchmark</span></p>
-    <p>Execution: <span class="inline">./enum_benchmark</span></p>
+        <p>Compilation: <span class="inline">clang++ -std=c++23 -O0 enum_benchmark.cpp -o enum_benchmark</span></p>
+        <p>Execution: <span class="inline">./enum_benchmark</span></p>
 
-    <p>Run 1:</p>
-    <pre><code>int enum (cast to int): 342 ms
+        <p>Run 1:</p>
+        <pre><code>int enum (cast to int): 342 ms
 int enum (to_char function): 103 ms
 char enum (direct cast): 97 ms</code></pre>
 
-    <p>Run 2:</p>
-    <pre><code>int enum (cast to int): 328 ms
+        <p>Run 2:</p>
+        <pre><code>int enum (cast to int): 328 ms
 int enum (to_char function): 109 ms
 char enum (direct cast): 93 ms</code></pre>
 
-    <p>Run 3:</p>
-    <pre><code>int enum (cast to int): 335 ms
+        <p>Run 3:</p>
+        <pre><code>int enum (cast to int): 335 ms
 int enum (to_char function): 106 ms
 char enum (direct cast): 95 ms</code></pre>
 
-    <p>Statistical analysis:</p>
-    <table>
-        <tr>
-            <th>Method</th>
-            <th>Mean (ms)</th>
-            <th>Std Dev (ms)</th>
-            <th>Variance (%)</th>
-            <th>Per-op (ns)</th>
-        </tr>
-        <tr>
-            <td>int enum</td>
-            <td class="data">335</td>
-            <td>5.7</td>
-            <td>±1.7%</td>
-            <td>33.5</td>
-        </tr>
-        <tr>
-            <td>to_char()</td>
-            <td class="data">106</td>
-            <td>2.5</td>
-            <td>±2.4%</td>
-            <td>10.6</td>
-        </tr>
-        <tr>
-            <td>char enum</td>
-            <td class="data">95</td>
-            <td>1.6</td>
-            <td>±1.7%</td>
-            <td>9.5</td>
-        </tr>
-    </table>
+        <p>Statistical analysis:</p>
+        <table>
+            <tr>
+                <th>Method</th>
+                <th>Mean (ms)</th>
+                <th>Std Dev (ms)</th>
+                <th>Variance (%)</th>
+                <th>Per-op (ns)</th>
+            </tr>
+            <tr>
+                <td>int enum</td>
+                <td class="data">335</td>
+                <td>5.7</td>
+                <td>±1.7%</td>
+                <td>33.5</td>
+            </tr>
+            <tr>
+                <td>to_char()</td>
+                <td class="data">106</td>
+                <td>2.5</td>
+                <td>±2.4%</td>
+                <td>10.6</td>
+            </tr>
+            <tr>
+                <td>char enum</td>
+                <td class="data">95</td>
+                <td>1.6</td>
+                <td>±1.7%</td>
+                <td>9.5</td>
+            </tr>
+        </table>
 
-    <p>Speedup calculations:</p>
-    <table>
-        <tr>
-            <th>Comparison</th>
-            <th>Calculation</th>
-            <th>Speedup</th>
-        </tr>
-        <tr>
-            <td>char enum vs int enum</td>
-            <td>335 / 95</td>
-            <td class="result">3.53×</td>
-        </tr>
-        <tr>
-            <td>to_char() vs int enum</td>
-            <td>335 / 106</td>
-            <td class="result">3.16×</td>
-        </tr>
-        <tr>
-            <td>char enum vs to_char()</td>
-            <td>106 / 95</td>
-            <td class="result">1.12×</td>
-        </tr>
-    </table>
+        <p>Speedup calculations:</p>
+        <table>
+            <tr>
+                <th>Comparison</th>
+                <th>Calculation</th>
+                <th>Speedup</th>
+            </tr>
+            <tr>
+                <td>char enum vs int enum</td>
+                <td>335 / 95</td>
+                <td class="result">3.53×</td>
+            </tr>
+            <tr>
+                <td>to_char() vs int enum</td>
+                <td>335 / 106</td>
+                <td class="result">3.16×</td>
+            </tr>
+            <tr>
+                <td>char enum vs to_char()</td>
+                <td>106 / 95</td>
+                <td class="result">1.12×</td>
+            </tr>
+        </table>
 
-    <p>Performance ranking:</p>
-    <pre><code>1. char enum:  95ms  (1-byte storage, direct char output, no conversion)
+        <p>Performance ranking:</p>
+        <pre><code>1. char enum:  95ms  (1-byte storage, direct char output, no conversion)
 2. to_char():  106ms (4-byte storage, function call overhead, char output)
 3. int enum:   335ms (4-byte storage, int-to-string conversion, multiple ops)</code></pre>
 
-    <p>Bottleneck analysis:</p>
-    <pre><code>int enum bottleneck:
+        <p>Bottleneck analysis:</p>
+        <pre><code>int enum bottleneck:
   - int-to-string conversion
   - Division and modulo operations
   - ASCII digit generation
