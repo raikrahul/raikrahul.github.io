@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ENUM_CLASS_PERF_ANALYSIS_V6</title>
+    <title>SYSTEMS AXIOMS: ENUM MECHANICS</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/bw.min.css">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
     <style>
@@ -28,99 +28,73 @@
             font-family: "Courier New", Courier, monospace;
             font-size: 14px;
             line-height: 1.3;
-            height: 100vh;
-            overflow-y: auto;
+            margin: 0;
+            padding: 2rem;
         }
 
-        /* LAYOUT */
-        .container {
+        /* GRID LAYOUT: 2 COLUMNS (BOOK STYLE) */
+        .grid-container {
             display: grid;
             grid-template-columns: 1fr 1fr;
-            min-height: 100vh;
-            border: 4px solid var(--brd);
+            gap: 4rem;
+            /* Gutter between pages */
+            max-width: 1800px;
+            margin: 0 auto;
         }
 
-        .page {
-            padding: 2rem;
-            display: flex;
-            flex-direction: column;
-            gap: 2rem;
+        /* CARD/MODULE STYLE */
+        .module {
+            border: 1px solid var(--brd);
+            padding: 1.5rem;
+            margin-bottom: 2rem;
+            position: relative;
         }
 
-        .page-left {
-            border-right: 2px solid var(--brd);
-        }
-
-        @media(max-width: 1100px) {
-            .container {
-                grid-template-columns: 1fr;
-                border: none;
-            }
-
-            .page-left {
-                border-right: none;
-                border-bottom: 2px solid var(--brd);
-            }
+        .module-header {
+            position: absolute;
+            top: -0.8rem;
+            left: 1rem;
+            background: var(--bg);
+            padding: 0 0.5rem;
+            font-weight: bold;
+            text-transform: uppercase;
+            border: 1px solid var(--fg);
         }
 
         /* TYPOGRAPHY */
         h1 {
-            font-size: 24px;
+            font-size: 32px;
             text-transform: uppercase;
             font-weight: bold;
-            margin-bottom: 1rem;
+            margin-bottom: 3rem;
+            text-align: center;
             border-bottom: 4px double var(--fg);
-            padding-bottom: 0.5rem;
+            padding-bottom: 1rem;
         }
 
         h2 {
-            font-size: 16px;
+            font-size: 14px;
             text-transform: uppercase;
-            background: var(--fg);
-            color: var(--bg);
-            padding: 0.2rem 0.5rem;
-            margin-bottom: 1rem;
-            display: inline-block;
             font-weight: bold;
-        }
-
-        /* COMPONENTS */
-        .block {
-            margin-bottom: 2rem;
+            margin-bottom: 0.5rem;
+            color: var(--fg);
+            text-decoration: underline;
         }
 
         .stat-box {
-            border: 1px solid var(--fg);
-            padding: 1rem;
+            border: 1px solid var(--dim);
+            padding: 0.5rem;
             margin-top: 0.5rem;
         }
 
         .stat-row {
             display: flex;
             justify-content: space-between;
-            margin-bottom: 0.5rem;
-            border-bottom: 1px dotted var(--dim);
-            padding-bottom: 0.2rem;
-        }
-
-        .stat-row:last-child {
-            border-bottom: none;
-            margin-bottom: 0;
+            margin-bottom: 0.2rem;
         }
 
         .val {
             font-weight: bold;
-        }
-
-        .bad {
-            text-decoration: underline;
-            text-decoration-style: double;
-            color: #fff;
-        }
-
-        .good {
-            border: 1px solid #fff;
-            padding: 0 0.2rem;
         }
 
         pre {
@@ -128,168 +102,222 @@
             padding: 0.5rem;
             font-size: 12px;
             margin-bottom: 1rem;
+            overflow-x: auto;
         }
 
         code {
             font-family: inherit;
         }
 
-        a {
-            color: var(--fg);
-            text-decoration: underline;
-        }
-
-        a:hover {
-            background: var(--fg);
-            color: var(--bg);
-            text-decoration: none;
-        }
-
-        .metadata {
+        /* UTILS */
+        .code-label {
             font-size: 10px;
             color: var(--dim);
             text-transform: uppercase;
             letter-spacing: 1px;
-            margin-bottom: 2rem;
+            margin-bottom: 0.2rem;
+        }
+
+        .arrow {
+            text-align: center;
+            font-weight: bold;
+            margin: 0.5rem 0;
+            color: var(--dim);
+        }
+
+        .conclusion {
+            border: 2px solid #fff;
+            padding: 1rem;
+            text-align: center;
+            font-weight: bold;
+            margin-top: 2rem;
+        }
+
+        @media(max-width: 1100px) {
+            .grid-container {
+                grid-template-columns: 1fr;
+                gap: 2rem;
+            }
         }
     </style>
 </head>
 
 <body>
 
-    <div class="container">
+    <h1>Systems Axioms: x86-64 Enum Mechanics</h1>
 
-        <!-- LEFT PAGE: RAW DATA & BENCHMARKS -->
-        <div class="page page-left">
-            <div>
-                <h1>01. The Observation [DATA]</h1>
-                <div class="metadata">TARGET: x86_64-LINUX-GNU | CLANG 18.1.3 (-std=c++23) | O3 vs O0</div>
+    <div class="grid-container">
 
-                <div class="block">
-                    <h2>[A] TEST 1: STORAGE SIZE</h2>
-                    <div class="stat-box">
-                        <div class="stat-row"><span>sizeof(OrderType)</span><span class="val">4 BYTES</span></div>
-                        <div class="stat-row"><span>sizeof(OrderType2)</span><span class="val">1 BYTE</span></div>
+        <!-- LEFT COLUMN -->
+        <div class="column">
+
+            <!-- MODULE 0x00: SIZE -->
+            <div class="module">
+                <div class="module-header">AXIOM 0x00: SIZE DEFINITION</div>
+
+                <div class="code-label">CODE (enum_storage.cpp)</div>
+                <pre><code class="language-cpp">enum class OrderType        { BUY, SELL }; // Default
+enum class OrderType2 : char{ BUY, SELL }; // Explicit char
+
+std::cout << sizeof(OrderType);
+std::cout << sizeof(OrderType2);</code></pre>
+
+                <div class="arrow">⬇ EXECUTE ⬇</div>
+
+                <div class="code-label">OUTPUT</div>
+                <pre><code class="language-bash">sizeof(OrderType): 4
+sizeof(OrderType2): 1</code></pre>
+
+                <div class="stat-box">
+                    <div class="stat-row"><span>FACT:</span><span class="val">Explicit char reduces size by 75%</span>
                     </div>
-                    <pre><code class="language-asm"># INT ENUM (7 bytes)
-movl $1, -8(%rbp)     # c7 45 f8 01 00 00 00
-
-# CHAR ENUM (4 bytes)
-movb $83, -9(%rbp)    # c6 45 f7 53</code></pre>
-                </div>
-
-                <div class="block">
-                    <h2>[B] TEST 2: WITH COUT (10M ITER)</h2>
-                    <div class="stat-box">
-                        <div class="stat-row"><span>INT (CAST TO INT)</span><span class="val">335 ms</span></div>
-                        <div class="stat-row"><span>CHAR (DIRECT)</span><span class="val good">95 ms</span></div>
-                        <div class="stat-row"><span>DELTA</span><span class="val">CHAR 3.5x FASTER</span></div>
-                    </div>
-                    <pre><code class="language-asm"># INT: Operator<<(int) -> COMPLEX
-callq _ZNSolsEi@PLT
-
-# CHAR: Operator<<(char) -> SIMPLE
-callq _ZStlsISt11char_traitsIcEERSt13basic_ostreamIcT_ES5_c@PLT</code></pre>
-                </div>
-
-                <div class="block">
-                    <h2>[C] TEST 3: WITHOUT COUT (100M ITER)</h2>
-                    <div class="stat-box" style="border: 2px solid white;">
-                        <div class="stat-row"><span>INT (PURE STORE)</span><span class="val good">253 ms</span></div>
-                        <div class="stat-row"><span>CHAR (PURE STORE)</span><span class="val bad">296 ms</span></div>
-                        <div class="stat-row"><span>DELTA</span><span class="val">CHAR 17% SLOWER</span></div>
-                    </div>
-                    <pre><code class="language-asm"># INT: CMOV (9 instr, 0 spills)
-cmovnel %ecx, %eax
-
-# CHAR: BRANCH (14 instr, 4 spills)
-jne .LBB4_6</code></pre>
-                </div>
-
-                <div style="margin-top:2rem;">
-                    <h3>SOURCE REFERENCES:</h3>
-                    <ul style="list-style:square; margin-left:1.5rem; line-height:1.6;">
-                        <li><a href="SURPRISE_REPORT.md">SURPRISE_REPORT.md</a></li>
-                        <li><a href="09-pure-move-benchmark.md">09-pure-move-benchmark.md</a></li>
-                        <li><a href="08-benchmark-results-proof.md">08-benchmark-results-proof.md</a></li>
-                    </ul>
                 </div>
             </div>
+
+            <!-- MODULE 0x02: IO PATH (INT) -->
+            <div class="module">
+                <div class="module-header">AXIOM 0x02: I/O PATH (INT)</div>
+
+                <div class="code-label">CODE (test_cout_int.cpp)</div>
+                <pre><code class="language-cpp">OrderType type = OrderType::SELL;
+std::cout << static_cast<int>(type);</code></pre>
+
+                <div class="arrow">⬇ ASSEMBLY (test_cout_int.s) ⬇</div>
+
+                <pre><code class="language-asm">movl $1, -8(%rbp)               # Store 1
+movl -8(%rbp), %esi             # Load to ARG2
+callq _ZNSolsEi@PLT             # Call operator<<(int)</code></pre>
+
+                <div class="stat-box">
+                    <div class="stat-row"><span>TARGET:</span><span class="val">std::ostream::operator<<(int)< /span>
+                    </div>
+                    <div class="stat-row"><span>COMPLEXITY:</span><span class="val">HIGH (Formatting, Sign Check)</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- MODULE 0x04: LOGIC PATH (INT) -->
+            <div class="module">
+                <div class="module-header">AXIOM 0x04: LOGIC PATH (INT)</div>
+
+                <div class="code-label">CODE (test_cmov.cpp)</div>
+                <pre><code class="language-cpp">OrderType type = (i & 1) ? SELL : BUY;
+// TERNARY OPERATOR using INTs</code></pre>
+
+                <div class="arrow">⬇ ASSEMBLY (test_cmov.s) ⬇</div>
+
+                <pre><code class="language-asm">cmpl $0, %edx           # Compare
+cmovnel %ecx, %eax      # CONDITIONAL MOVE</code></pre>
+
+                <div class="stat-box">
+                    <div class="stat-row"><span>INSTRUCTION:</span><span class="val">cmovnel (32-bit)</span></div>
+                    <div class="stat-row"><span>BRANCHES:</span><span class="val">0</span></div>
+                    <div class="stat-row"><span>SPILLS:</span><span class="val">0</span></div>
+                </div>
+            </div>
+
+            <!-- MODULE 0x06: BENCHMARK (INT) -->
+            <div class="module">
+                <div class="module-header">AXIOM 0x06: BENCHMARK (INT)</div>
+                <div class="stat-box" style="border: 2px solid white;">
+                    <div class="stat-row"><span>METRIC</span><span class="val">RESULT</span></div>
+                    <div class="stat-row"><span>Time (IO)</span><span class="val">335 ms</span></div>
+                    <div class="stat-row"><span>Time (Logic)</span><span class="val">253 ms (FASTER)</span></div>
+                </div>
+            </div>
+
         </div>
 
-        <!-- RIGHT PAGE: INVESTIGATION & PROOFS -->
-        <div class="page">
-            <div>
-                <h1>02. The Investigation [ASM]</h1>
-                <div class="metadata">ANALYSIS: ASSEMBLY, PIPELINE, & STACK SPILLS</div>
+        <!-- RIGHT COLUMN -->
+        <div class="column">
 
-                <div class="block">
-                    <h2>[A] THE CMOV vs BRANCH AXIOM</h2>
-                    <p><strong>Axiom:</strong> x86-64 has `cmov` for 32-bit but <strong>NO</strong> conditional move for
-                        8-bit.</p>
-                    <div class="stat-box">
-                        <div class="stat-row"><span>INT (32-bit)</span><span class="val">cmovnel %ecx, %eax</span></div>
-                        <div class="stat-row"><span>CHAR (8-bit)</span><span class="val">jne .LBB4_6</span></div>
+            <!-- MODULE 0x01: MEMORY STORAGE -->
+            <div class="module">
+                <div class="module-header">AXIOM 0x01: MEMORY STORAGE</div>
+
+                <div class="code-label">CODE (Assignment)</div>
+                <pre><code class="language-cpp">OrderType  a = OrderType::SELL;  // int
+OrderType2 b = OrderType2::SELL; // char</code></pre>
+
+                <div class="arrow">⬇ ASSEMBLY (case1.s vs case2.s) ⬇</div>
+
+                <div class="code-label">INT ENUM</div>
+                <pre><code class="language-asm">movl $1, -8(%rbp)     # 32-bit Move</code></pre>
+
+                <div class="code-label">CHAR ENUM</div>
+                <pre><code class="language-asm">movb $83, -9(%rbp)    # 8-bit Move</code></pre>
+
+                <div class="stat-box">
+                    <div class="stat-row"><span>FACT:</span><span class="val">Instruction width matches type size</span>
                     </div>
-                </div>
-
-                <div class="block">
-                    <h2>[B] RAW ASSEMBLY COMPARISON</h2>
-
-                    <div style="margin-bottom:1rem;">
-                        <div style="text-decoration:underline; font-weight:bold;">INT TERNARY (FAST PATH)</div>
-                        <pre><code class="language-asm">movl -12(%rbp), %edx   # Load i
-andl $1, %edx          # i & 1
-xorl %eax, %eax        # 0
-movl $1, %ecx          # 1
-cmpl $0, %edx          # Compare
-cmovnel %ecx, %eax     # CMOV (No Branch)</code></pre>
-                    </div>
-
-                    <div>
-                        <div style="text-decoration:underline; font-weight:bold;">CHAR TERNARY (SLOW PATH)</div>
-                        <pre><code class="language-asm">movl -12(%rbp), %ecx   # Load i
-andl $1, %ecx          # i & 1
-movb $83, %al          # 'S'
-movb $66, %dl          # 'B'
-movb %dl, -42(%rbp)    # SPILL STACK
-cmpl $0, %ecx          # Compare
-movb %al, -41(%rbp)    # SPILL STACK
-jne .LBB4_6            # BRANCH
-movb -42(%rbp), %al    # RELOAD STACK</code></pre>
-                    </div>
-                </div>
-
-                <div class="block">
-                    <h2>[C] SIDE-BY-SIDE SUMMARY</h2>
-                    <div class="stat-box">
-                        <div class="stat-row"><span>METRIC</span><span class="val">INT vs CHAR</span></div>
-                        <div class="stat-row"><span>Storage</span><span class="val">4B vs 1B</span></div>
-                        <div class="stat-row"><span>Machine Code</span><span class="val">7B vs 4B</span></div>
-                        <div class="stat-row"><span>Time (IO)</span><span class="val">335ms vs 95ms</span></div>
-                        <div class="stat-row"><span>Time (Pure)</span><span class="val">253ms vs 296ms</span></div>
-                        <div class="stat-row"><span>Instruction</span><span class="val">cmov vs jne</span></div>
-                        <div class="stat-row"><span>Stack Spills</span><span class="val">0 vs 4</span></div>
-                    </div>
-
-                    <div style="margin-top:1rem; border:1px solid #fff; padding:0.5rem;">
-                        <strong>VERDICT:</strong> Use `char` for storage/IO efficiency. Use `int` for raw computational
-                        logic.
-                    </div>
-                </div>
-
-                <div style="margin-top:2rem;">
-                    <h3>DEEP DIVE PROOFS:</h3>
-                    <ul style="list-style:square; margin-left:1.5rem; line-height:1.6;">
-                        <li><a href="BRANCH_VS_CMOV_AXIOMS.md">BRANCH_VS_CMOV_AXIOMS.md</a></li>
-                        <li><a href="THE_REAL_DIFFERENCE.md">THE_REAL_DIFFERENCE.md</a></li>
-                        <li><a href="pure_enum_test.cpp">pure_enum_test.cpp</a></li>
-                    </ul>
                 </div>
             </div>
+
+            <!-- MODULE 0x03: IO PATH (CHAR) -->
+            <div class="module">
+                <div class="module-header">AXIOM 0x03: I/O PATH (CHAR)</div>
+
+                <div class="code-label">CODE (test_cout_char.cpp)</div>
+                <pre><code class="language-cpp">OrderType2 type = OrderType2::SELL;
+std::cout << static_cast<char>(type);</code></pre>
+
+                <div class="arrow">⬇ ASSEMBLY (test_cout_char.s) ⬇</div>
+
+                <pre><code class="language-asm">movb $83, -5(%rbp)              # Store 'S'
+movsbl -5(%rbp), %esi           # Sign Extend
+callq _ZStls..._c@PLT           # Call operator<<(char)</code></pre>
+
+                <div class="stat-box">
+                    <div class="stat-row"><span>TARGET:</span><span class="val">std::operator<<(char)< /span>
+                    </div>
+                    <div class="stat-row"><span>COMPLEXITY:</span><span class="val">LOW (Direct Buffer Write)</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- MODULE 0x05: LOGIC PATH (CHAR) -->
+            <div class="module">
+                <div class="module-header">AXIOM 0x05: LOGIC PATH (CHAR)</div>
+
+                <div class="code-label">CODE (test_cmov.cpp)</div>
+                <pre><code class="language-cpp">OrderType2 type = (i & 1) ? SELL : BUY;
+// TERNARY OPERATOR using CHARs</code></pre>
+
+                <div class="arrow">⬇ ASSEMBLY (test_cmov.s) ⬇</div>
+
+                <pre><code class="language-asm">movb %dl, -6(%rbp)      # SPILL to stack
+cmpl $0, %ecx           # Compare
+branch_logic:
+jne .LBB1_2             # JUMP (Branch)
+movb -5(%rbp), %al      # RELOAD from stack</code></pre>
+
+                <div class="stat-box">
+                    <div class="stat-row"><span>INSTRUCTION:</span><span class="val">jne (Branch)</span></div>
+                    <div class="stat-row"><span>BRANCHES:</span><span class="val">1 (Risk of stall)</span></div>
+                    <div class="stat-row"><span>SPILLS:</span><span class="val">4 (Memory Access)</span></div>
+                </div>
+            </div>
+
+            <!-- MODULE 0x07: BENCHMARK (CHAR) -->
+            <div class="module">
+                <div class="module-header">AXIOM 0x07: BENCHMARK (CHAR)</div>
+                <div class="stat-box" style="border: 2px solid white;">
+                    <div class="stat-row"><span>METRIC</span><span class="val">RESULT</span></div>
+                    <div class="stat-row"><span>Time (IO)</span><span class="val">95 ms (FASTER)</span></div>
+                    <div class="stat-row"><span>Time (Logic)</span><span class="val">296 ms (SLOWER)</span></div>
+                </div>
+            </div>
+
         </div>
 
     </div>
+
+    <div class="conclusion">
+        <h2>ROOT CAUSE ANALYSIS</h2>
+        <p>x86-64 has `cmov` for 32-bit registers but NOT for 8-bit registers.</p>
+        <p>When using `char` enums for logic, the compiler falls back to Branch + Stack Spills.</p>
+    </div>
+
     <script>hljs.highlightAll();</script>
 </body>
 
