@@ -7,6 +7,7 @@ Commit: 1edfc17
 ## Live URLs
 
 Main page: https://raikrahul.github.io/cpp-enums/index.html
+Homepage link: https://raikrahul.github.io (see Projects section)
 
 Documentation:
 - https://raikrahul.github.io/cpp-enums/README.md
