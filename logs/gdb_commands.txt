@@ -1,0 +1,11 @@
+break main
+run "abcdefgh" 4
+break 36
+break 38
+continue
+print res
+x/12sb res
+continue
+print res
+x/12sb res
+quit

@@ -89,6 +89,27 @@ $2 = 0x7fffffffde10 'U' &lt;repeats 80 times&gt;, "p\336\377\377\377\177"
     <div class="callout">
         <strong>Key Discovery:</strong> The true source of the segmentation fault is the escape of the local automatic stack variable. Once returned, subsequent function calls overwrite it. <code>printf</code>'s null byte search then overflows the invalid memory, leading to either arbitrary stack leakage or a page-boundary-crossing segmentation fault.
     </div>
+
+    <h2>GitHub Sources & Verification Logs</h2>
+    <p>To inspect the raw logic, code drivers, and trace results, navigate to the hosted github pages assets below:</p>
+    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-top: 1rem;">
+        <div style="background: var(--card); border: 1px solid var(--border); padding: 1rem; border-radius: 8px;">
+            <strong style="color: var(--accent);"><i class="fab fa-github"></i> Source Code</strong>
+            <ul style="list-style-type: none; margin-top: 0.5rem; font-size: 0.8rem; line-height: 1.8;">
+                <li><a href="https://github.com/raikrahul/raikrahul.github.io/blob/master/src/buggy.c" target="_blank" style="color: var(--green); text-decoration: none;">buggy.c (Sandbox)</a></li>
+                <li><a href="https://github.com/raikrahul/raikrahul.github.io/blob/master/src/kprobe_crash.c" target="_blank" style="color: var(--green); text-decoration: none;">kprobe_crash.c (Driver)</a></li>
+                <li><a href="https://github.com/raikrahul/raikrahul.github.io/blob/master/src/trace_crash.bt" target="_blank" style="color: var(--green); text-decoration: none;">trace_crash.bt (eBPF Probe)</a></li>
+            </ul>
+        </div>
+        <div style="background: var(--card); border: 1px solid var(--border); padding: 1rem; border-radius: 8px;">
+            <strong style="color: var(--accent);"><i class="fas fa-file-invoice"></i> Proof Logs</strong>
+            <ul style="list-style-type: none; margin-top: 0.5rem; font-size: 0.8rem; line-height: 1.8;">
+                <li><a href="https://github.com/raikrahul/raikrahul.github.io/blob/master/logs/gdb_commands.txt" target="_blank" style="color: var(--green); text-decoration: none;">gdb_commands.txt (Steps)</a></li>
+                <li><a href="https://github.com/raikrahul/raikrahul.github.io/blob/master/logs/dmesg_crash.log" target="_blank" style="color: var(--green); text-decoration: none;">dmesg_crash.log (Kernel Output)</a></li>
+                <li><a href="https://github.com/raikrahul/raikrahul.github.io/blob/master/src/run_tracing.sh" target="_blank" style="color: var(--green); text-decoration: none;">run_tracing.sh (Orchestration)</a></li>
+            </ul>
+        </div>
+    </div>
 </article>
 <footer>Disk Bytes to DRAM Frames — <a href="index.html" style="color:var(--accent);">Back to index</a></footer>
 </body>

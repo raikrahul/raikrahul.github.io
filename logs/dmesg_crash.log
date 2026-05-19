@@ -1,0 +1,30 @@
+[  990.276839] audit: type=1400 audit(1779185223.395:260): apparmor="DENIED" operation="symlink" class="file" profile="snap.firefox.firefox" name="/dev/char/195:254" pid=9953 comm="CanvasRenderer" requested_mask="c" denied_mask="c" fsuid=1000 ouid=1000
+[  990.311305] audit: type=1400 audit(1779185223.429:261): apparmor="DENIED" operation="symlink" class="file" profile="snap.firefox.firefox" name="/dev/char/195:254" pid=9953 comm="CanvasRenderer" requested_mask="c" denied_mask="c" fsuid=1000 ouid=1000
+[  999.637317] audit: type=1400 audit(1779185232.756:262): apparmor="DENIED" operation="symlink" class="file" profile="snap.firefox.firefox" name="/dev/char/195:254" pid=9953 comm="CanvasRenderer" requested_mask="c" denied_mask="c" fsuid=1000 ouid=1000
+[  999.666328] audit: type=1400 audit(1779185232.785:263): apparmor="DENIED" operation="symlink" class="file" profile="snap.firefox.firefox" name="/dev/char/195:254" pid=9953 comm="CanvasRenderer" requested_mask="c" denied_mask="c" fsuid=1000 ouid=1000
+[ 1000.225913] audit: type=1400 audit(1779185233.345:264): apparmor="DENIED" operation="symlink" class="file" profile="snap.firefox.firefox" name="/dev/char/195:254" pid=9953 comm="CanvasRenderer" requested_mask="c" denied_mask="c" fsuid=1000 ouid=1000
+[ 1000.258469] audit: type=1400 audit(1779185233.377:265): apparmor="DENIED" operation="symlink" class="file" profile="snap.firefox.firefox" name="/dev/char/195:254" pid=9953 comm="CanvasRenderer" requested_mask="c" denied_mask="c" fsuid=1000 ouid=1000
+[ 1012.125003] audit: type=1400 audit(1779185245.245:266): apparmor="DENIED" operation="symlink" class="file" profile="snap.firefox.firefox" name="/dev/char/195:254" pid=9953 comm="CanvasRenderer" requested_mask="c" denied_mask="c" fsuid=1000 ouid=1000
+[ 1012.157132] audit: type=1400 audit(1779185245.278:267): apparmor="DENIED" operation="symlink" class="file" profile="snap.firefox.firefox" name="/dev/char/195:254" pid=9953 comm="CanvasRenderer" requested_mask="c" denied_mask="c" fsuid=1000 ouid=1000
+[ 1039.547976] input: Lenovo Bluetooth Mouse as /devices/virtual/misc/uhid/0005:17EF:60EF.0008/input/input33
+[ 1039.548556] input: Lenovo Bluetooth Mouse Keyboard as /devices/virtual/misc/uhid/0005:17EF:60EF.0008/input/input34
+[ 1039.549013] input: Lenovo Bluetooth Mouse as /devices/virtual/misc/uhid/0005:17EF:60EF.0008/input/input35
+[ 1039.549297] hid-generic 0005:17EF:60EF.0008: input,hidraw6: BLUETOOTH HID v0.15 Mouse [Lenovo Bluetooth Mouse] on 70:66:55:b1:9a:8c
+[ 1442.858744] audit: type=1400 audit(1779185675.988:268): apparmor="DENIED" operation="symlink" class="file" profile="snap.firefox.firefox" name="/dev/char/195:254" pid=9953 comm="CanvasRenderer" requested_mask="c" denied_mask="c" fsuid=1000 ouid=1000
+[ 1442.886604] audit: type=1400 audit(1779185676.015:269): apparmor="DENIED" operation="symlink" class="file" profile="snap.firefox.firefox" name="/dev/char/195:254" pid=9953 comm="CanvasRenderer" requested_mask="c" denied_mask="c" fsuid=1000 ouid=1000
+[ 1626.948659] audit: type=1400 audit(1779185860.082:270): apparmor="DENIED" operation="symlink" class="file" profile="snap.firefox.firefox" name="/dev/char/195:254" pid=9953 comm="CanvasRenderer" requested_mask="c" denied_mask="c" fsuid=1000 ouid=1000
+[ 1626.979456] audit: type=1400 audit(1779185860.113:271): apparmor="DENIED" operation="symlink" class="file" profile="snap.firefox.firefox" name="/dev/char/195:254" pid=9953 comm="CanvasRenderer" requested_mask="c" denied_mask="c" fsuid=1000 ouid=1000
+[ 2352.611493] audit: type=1400 audit(1779186585.823:272): apparmor="DENIED" operation="symlink" class="file" profile="snap.firefox.firefox" name="/dev/char/195:254" pid=9953 comm="CanvasRenderer" requested_mask="c" denied_mask="c" fsuid=1000 ouid=1000
+[ 2352.639940] audit: type=1400 audit(1779186585.852:273): apparmor="DENIED" operation="symlink" class="file" profile="snap.firefox.firefox" name="/dev/char/195:254" pid=9953 comm="CanvasRenderer" requested_mask="c" denied_mask="c" fsuid=1000 ouid=1000
+[ 3228.717578] traps: buggy[238008] general protection fault ip:7201e418b7dd sp:7fffd3d31958 error:0 in libc.so.6[18b7dd,7201e4028000+188000]
+[ 3248.848538] kprobe_crash: module verification failed: signature and/or required key missing - tainting kernel
+[ 3248.865671] kprobe_crash: planted kprobe at force_sig_fault
+[ 3248.975228] NOTICE: Automounting of tracing to debugfs is deprecated and will be removed in 2030
+[ 3250.873323] traps: buggy[238340] general protection fault ip:760bd5d8b7dd sp:7ffc3ffad408 error:0 in libc.so.6[18b7dd,760bd5c28000+188000]
+[ 3252.934046] kprobe_crash: unregistered kprobe
+[ 3276.120882] kprobe_crash: planted kprobe at force_sig_fault
+[ 3278.126297] buggy[238451]: segfault at 123456789000 ip 00007229c558b7dd sp 00007ffc38c6a4f8 error 4 in libc.so.6[18b7dd,7229c5428000+188000] likely on CPU 8 (core 5, socket 0)
+[ 3278.126324] Code: 00 00 66 2e 0f 1f 84 00 00 00 00 00 90 f3 0f 1e fa 89 f8 48 89 fa c5 f9 ef c0 25 ff 0f 00 00 3d e0 0f 00 00 0f 87 33 01 00 00 <c5> fd 74 0f c5 fd d7 c1 85 c0 74 57 f3 0f bc c0 c5 f8 77 c3 66 66
+[ 3278.126331] KPROBE CRASH: force_sig_fault triggered by 'buggy' (pid: 238451)!
+[ 3278.126336]   Signal: 11, Code: 1, Faulting Address: 0x123456789000
+[ 3280.175566] kprobe_crash: unregistered kprobe

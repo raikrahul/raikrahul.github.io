@@ -1,0 +1,16 @@
+#!/usr/bin/env bpftrace
+
+/* Trace force_sig_fault to capture process crashes and invalid memory accesses */
+kprobe:force_sig_fault
+{
+    $sig = arg0;
+    $code = arg1;
+    $addr = arg2;
+    
+    if (comm == "buggy") {
+        printf("eBPF TRACE: process '%s' (pid: %d) triggered force_sig_fault!\n", comm, pid);
+        printf("  Signal: %d (SIGSEGV=%d)\n", $sig, 11);
+        printf("  Code: %d (SEGV_MAPERR=%d)\n", $code, 1);
+        printf("  Faulting Address: 0x%llx\n", $addr);
+    }
+}
