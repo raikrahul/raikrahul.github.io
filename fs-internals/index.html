@@ -240,7 +240,7 @@
     <h1>Disk Bytes to <span>DRAM Frames</span></h1>
     <p>How bytes move from spinning platters through kernel buffers into your program's address space. Every post shows real offsets, real hex dumps, real register values.</p>
     <div class="hero-stats">
-        <div class="hero-stat"><div class="num" id="post-count">4</div><div class="lbl">Posts</div></div>
+        <div class="hero-stat"><div class="num" id="post-count">5</div><div class="lbl">Posts</div></div>
         <div class="hero-stat"><div class="num">12</div><div class="lbl">Topics</div></div>
         <div class="hero-stat"><div class="num">0x1000</div><div class="lbl">Bytes/Page</div></div>
     </div>
@@ -308,13 +308,26 @@
             </div>
         </a>
 
+        <a href="post05-kernel-sysv-iget.html" class="post-card">
+            <div class="post-meta">
+                <span class="post-num">#05</span>
+                <span class="post-date">May 2026</span>
+            </div>
+            <h3>How the Linux Kernel Maps Inode Numbers to Disk Sectors (V6 vs. System V)</h3>
+            <p>Locating dynamic inode blocks on disk. Comparing division/modulo calculations in Unix V6 simulator against direct bitwise shifts and AND masks inside the 6.8.0 Linux kernel's sysv_raw_inode.</p>
+            <div class="post-tags">
+                <span class="post-tag tag-kernel">inode mapping</span>
+                <span class="post-tag tag-disk">bitwise shifts</span>
+            </div>
+        </a>
+
     </div>
 
     <div class="upcoming">
         <h2><i class="fas fa-clock"></i> Coming Next</h2>
         <div class="upcoming-list">
             <div class="upcoming-item">
-                <span class="idx">05</span>
+                <span class="idx">06</span>
                 <span class="title">How ext4 Maps File Byte Offsets to Disk Blocks (Extent Records)</span>
                 <span class="status status-wip">DRAFTING</span>
             </div>

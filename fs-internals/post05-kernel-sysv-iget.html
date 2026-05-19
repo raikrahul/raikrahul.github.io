@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>#05: How the Linux Kernel Maps Inode Numbers to Disk Sectors (V6 vs. System V)</title>
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600;700&family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        :root { --bg: #06080c; --bg2: #0c1018; --card: #111827; --border: #1e293b; --t1: #e2e8f0; --t2: #64748b; --t3: #94a3b8; --accent: #38bdf8; --accent2: #818cf8; --green: #34d399; --orange: #fb923c; --accent3: #f472b6; --mono: 'JetBrains Mono', monospace; --sans: 'Inter', sans-serif; }
+        body { background: var(--bg); color: var(--t1); font-family: var(--sans); line-height: 1.7; }
+        .back { display: inline-flex; align-items: center; gap: 0.4rem; color: var(--t2); text-decoration: none; font-size: 0.8rem; padding: 1.5rem 2rem; }
+        .back:hover { color: var(--accent); }
+        article { max-width: 720px; margin: 0 auto; padding: 0 2rem 4rem; }
+        .post-num { font-family: var(--mono); font-size: 0.7rem; font-weight: 700; color: var(--accent); padding: 0.2rem 0.6rem; background: rgba(56,189,248,0.1); border-radius: 4px; display: inline-block; margin-bottom: 0.8rem; }
+        h1 { font-size: 1.8rem; font-weight: 800; line-height: 1.2; margin-bottom: 0.5rem; }
+        .date { font-size: 0.75rem; color: var(--t2); margin-bottom: 2rem; }
+        h2 { font-size: 1.15rem; font-weight: 700; margin: 2rem 0 0.8rem; border-left: 3px solid var(--accent); padding-left: 0.8rem; }
+        p { margin-bottom: 1rem; color: var(--t3); font-size: 0.92rem; }
+        pre { background: var(--card); border: 1px solid var(--border); border-radius: 8px; padding: 1.2rem; overflow-x: auto; margin-bottom: 1.5rem; font-family: var(--mono); font-size: 0.78rem; color: var(--green); line-height: 1.6; }
+        code { font-family: var(--mono); font-size: 0.85em; background: rgba(56,189,248,0.08); padding: 0.1rem 0.35rem; border-radius: 3px; color: var(--accent); }
+        .callout { background: rgba(56,189,248,0.06); border: 1px solid rgba(56,189,248,0.15); border-radius: 8px; padding: 1rem 1.2rem; margin-bottom: 1.5rem; font-size: 0.85rem; }
+        .callout strong { color: var(--accent); }
+        .grill { background: rgba(251,146,60,0.08); border: 1px solid rgba(251,146,60,0.2); border-radius: 8px; padding: 1rem 1.2rem; margin: 2rem 0; font-size: 0.85rem; }
+        .grill strong { color: var(--orange); }
+        .step { background: var(--card); border: 1px solid var(--border); border-radius: 8px; padding: 1rem 1.2rem; margin-bottom: 1rem; }
+        .step-num { font-family: var(--mono); font-size: 0.7rem; font-weight: 700; color: var(--accent2); }
+        .step p { margin-bottom: 0; }
+        footer { text-align: center; padding: 2rem; font-size: 0.7rem; color: var(--t2); border-top: 1px solid var(--border); }
+    </style>
+</head>
+<body>
+<a href="index.html" class="back">← Back to all posts</a>
+<article>
+    <span class="post-num">#05</span>
+    <h1>How the Linux Kernel Maps Inode Numbers to Disk Sectors (V6 vs. System V)</h1>
+    <div class="date">May 2026</div>
+
+    <h2>The Problem</h2>
+    <p>A classic challenge in filesystem implementation is mapping a 1-based logical inode number (e.g. <code>inumber = 100</code>) to its exact physical location on the storage media. On a Unix V6 filesystem, each inode is 32 bytes and sectors are 512 bytes, meaning exactly 16 inodes fit inside a single sector. With the inode table starting at sector 2 on the disk, how does the filesystem locate and extract a specific inode?</p>
+
+    <h2>The Pedagogical Implementation (C/C++)</h2>
+    <p>In our pedagogical Unix V6 filesystem simulator, we implemented this translation using straightforward arithmetic operations (division and modulo):</p>
+    <pre>
+int block_of_inode = INODE_START_SECTOR + (inumber - 1) / INODES_PER_BLOCK;
+int slot_in_that_block = (inumber - 1) % INODES_PER_BLOCK;
+    </pre>
+    <p>For <code>inumber = 100</code>, with <code>INODE_START_SECTOR = 2</code> and <code>INODES_PER_BLOCK = 16</code>:</p>
+    <pre>
+1. block_of_inode    = 2 + (100 - 1) / 16 = 2 + 6 = 8
+2. slot_in_that_block = (100 - 1) % 16 = 99 % 16 = 3
+    </pre>
+    <p>This tells us that inode 100 sits at block 8, slot index 3 (the 4th slot, since arrays are 0-indexed).</p>
+
+    <h2>The Production Implementation (Linux Kernel 6.8.0)</h2>
+    <p>We searched the local Linux kernel source code on our machine and found the exact production counterpart inside <code>fs/sysv/ialloc.c</code> under the function <code>sysv_raw_inode()</code>:</p>
+    <pre>
+struct sysv_inode *
+sysv_raw_inode(struct super_block *sb, unsigned ino, struct buffer_head **bh)
+{
+	struct sysv_sb_info *sbi = SYSV_SB(sb);
+	struct sysv_inode *res;
+	int block = sbi->s_firstinodezone + sbi->s_block_base;
+
+	block += (ino-1) >> sbi->s_inodes_per_block_bits;
+	*bh = sb_bread(sb, block);
+	if (!*bh)
+		return NULL;
+	res = (struct sysv_inode *)(*bh)->b_data;
+	return res + ((ino-1) & sbi->s_inodes_per_block_1);
+}
+    </pre>
+
+    <h2>Comparing the Mathematics</h2>
+    <p>Although the Linux kernel code looks different at first glance, the underlying mathematical translation maps perfectly to our simulation, optimized for execution speed:</p>
+    
+    <div class="step">
+        <span class="step-num">Step 1: The Base Sector Offset</span>
+        <p>Simulation: <code>INODE_START_SECTOR</code> (fixed constant 2)<br>
+        Kernel: <code>sbi->s_firstinodezone + sbi->s_block_base</code> (dynamic superblock geometry parameters)</p>
+    </div>
+
+    <div class="step">
+        <span class="step-num">Step 2: Division by 16 via Bitwise Right Shift</span>
+        <p>Simulation: <code>(inumber - 1) / 16</code><br>
+        Kernel: <code>(ino-1) >> sbi->s_inodes_per_block_bits</code> (where <code>s_inodes_per_block_bits = 4</code>)<br>
+        <strong>Equivalent:</strong> <code>(ino-1) >> 4</code> is identical to integer division by <code>2^4 = 16</code>.</p>
+    </div>
+
+    <div class="step">
+        <span class="step-num">Step 3: Modulo 16 via Bitwise AND Masking</span>
+        <p>Simulation: <code>(inumber - 1) % 16</code><br>
+        Kernel: <code>res + ((ino-1) & sbi->s_inodes_per_block_1)</code> (where <code>s_inodes_per_block_1 = 15</code> or <code>0xF</code>)<br>
+        <strong>Equivalent:</strong> <code>(ino-1) & 15</code> is identical to modulo remainder extraction <code>% 16</code> because it isolates the lowest 4 bits.</p>
+    </div>
+
+    <div class="callout">
+        <strong>Why the Kernel Avoids Modulo and Division:</strong> Integer division (<code>DIV</code>/<code>IDIV</code> instructions on x86_64) is a notoriously slow operation, taking 10 to 40 CPU clock cycles depending on the processor generation. In contrast, bitwise shifts (<code>SHR</code>) and bitwise ANDs (<code>AND</code>) are single-cycle, pipeline-friendly instructions that run with zero latency, making them mandatory in performance-critical hot paths like the filesystem block layers.
+    </div>
+</article>
+<footer>Disk Bytes to DRAM Frames — <a href="index.html" style="color:var(--accent);">Back to index</a></footer>
+</body>
+</html>
