@@ -39,73 +39,55 @@
     <h2>The Premise</h2>
     <p>Returning a stack pointer from a C/C++ function is a classic undefined behavior bug. When the function returns, its frame is destroyed. If you call another function, it overwrites the stack memory. When the caller tries to dereference that corrupted pointer, a crash occurs. But exactly what does the silicon and the kernel do in this scenario? We set out to find out using real kernel probes (kprobes).</p>
 
-    <h2>The Experiment</h2>
-    <p>We wrote a buggy C program that allocated a local buffer on the stack, returned its address, called a stack-corrupting function <code>garbage_stack()</code>, and then attempted to dereference the corrupted pointer. We tested two variants of pointer corruption to see how the CPU and OS reacted.</p>
-
-    <h2>Case A: Non-Canonical Address Corruption (GPF)</h2>
-    <p>In the first case, we mangled the pointer to a completely invalid address: <code>0x5555555555555555</code>. When we ran the program, the kernel immediately logged this in <code>dmesg</code>:</p>
+    <h2>The Bug: Automatic Variable Escape</h2>
+    <p>The culprit resides in <code>lastN</code>:</p>
     <pre>
-[ 3250.873323] traps: buggy[238340] general protection fault ip:760bd5d8b7dd sp:7ffc3ffad408 error:0 in libc.so.6[18b7dd,760bd5c28000+188000]
-    </pre>
-    <p><strong>Silicon Mechanics:</strong> On x86_64, a virtual address must be in <em>canonical form</em>: bits 48 through 63 must be identical copies of bit 47. The address <code>0x5555555555555555</code> violates this rule. When the MMU attempts to decode a non-canonical address, it bypasses the normal page fault logic entirely and fires a <strong>General Protection Fault (GPF, Interrupt 13)</strong>. The kernel's GPF handler directly kills the process by issuing a <code>force_sig</code> call.</p>
-
-    <h2>Case B: Canonical but Unmapped Address Corruption (Page Fault)</h2>
-    <p>In the second case, we set the corrupted pointer to a canonical user space address that is completely unmapped: <code>0x123456789000</code>. This time, our custom kprobe placed at <code>force_sig_fault</code> captured the crash perfectly:</p>
-    <pre>
-[ 3278.126297] buggy[238451]: segfault at 123456789000 ip 00007229c558b7dd sp 00007ffc38c6a4f8 error 4 in libc.so.6[18b7dd,7229c5428000+188000]
-[ 3278.126331] KPROBE CRASH: force_sig_fault triggered by 'buggy' (pid: 238451)!
-[ 3278.126336]   Signal: 11, Code: 1, Faulting Address: 0x123456789000
-    </pre>
-
-    <h2>Silicon & Kernel Walk (Page Fault Scenario)</h2>
-    <div class="step">
-        <span class="step-num">STEP 1: CPU MMU triggers Page Fault (Interrupt 14)</span>
-        <p>The address <code>0x123456789000</code> is canonical, so the CPU attempts to walk the 4-level page table. It finds no entry (PTE is not present). The CPU suspends the thread and generates a <strong>Page Fault (Interrupt 14)</strong>, loading the faulting address into the <code>CR2</code> register.</p>
-    </div>
-
-    <div class="step">
-        <span class="step-num">STEP 2: Kernel Exception Handler</span>
-        <p>The kernel catches Interrupt 14 in <code>exc_page_fault()</code>, which calls <code>do_user_addr_fault()</code>. It searches the process's active Virtual Memory Areas (VMAs) in <code>find_vma()</code>. It finds that <code>0x123456789000</code> is completely outside any valid allocated region.</p>
-    </div>
-
-    <div class="step">
-        <span class="step-num">STEP 3: force_sig_fault Call</span>
-        <p>Since the address has no VMA, the kernel calls <code>bad_area</code>, which ultimately routes to <code>force_sig_fault(SIGSEGV, SEGV_MAPERR, 0x123456789000)</code>. This helper builds a signal info struct and delivers <code>SIGSEGV</code> directly to the process.</p>
-    </div>
-
-    <h2>The Kernel Driver Code (kprobe_crash.c)</h2>
-    <p>To capture this, we loaded a kernel module that registers a probe at <code>force_sig_fault</code>. It extracts registers from the hardware stack and logs the crash parameters to `dmesg`:</p>
-    <pre>
-#include &lt;linux/module.h&gt;
-#include &lt;linux/kprobes.h&gt;
-#include &lt;linux/sched.h&gt;
-
-static struct kprobe kp = {
-    .symbol_name = "force_sig_fault",
-};
-
-static int handler_pre(struct kprobe *p, struct pt_regs *regs)
-{
-    if (strcmp(current->comm, "buggy") == 0) {
-        int sig = (int)regs->di;
-        int code = (int)regs->si;
-        unsigned long addr = (unsigned long)regs->dx;
-
-        pr_info("KPROBE CRASH: force_sig_fault triggered by '%s' (pid: %d)!\n",
-                current->comm, current->pid);
-        pr_info("  Signal: %d, Code: %d, Faulting Address: 0x%lx\n",
-                sig, code, addr);
-    }
-    return 0;
+char *lastN(const char *str, int n) {
+    ...
+    char result[n + 1];
+    strcpy(result, str + (len - n));
+    char * volatile ptr = result;
+    return ptr;
 }
+    </pre>
+    <p>Here, <code>result</code> is a local, stack-allocated variable in <code>lastN</code>'s stack frame. When the function returns, its stack frame is marked as invalid. However, the address of <code>result</code> is returned to the caller <code>main</code>. The use of <code>volatile</code> and intermediate variable <code>ptr</code> are decoy patterns that suppress compiler warnings about escaping local stack addresses, but they do not change the core undefined behavior.</p>
+
+    <h2>The Proof using GDB</h2>
+    <p>We ran the program inside GDB, setting breakpoints before and after the stack-corrupting <code>garbage_stack()</code> function call to trace the exact state of the memory:</p>
+    <pre>
+(gdb) # Breakpoint 2, main() before garbage_stack()
+(gdb) print res
+$1 = 0x7fffffffde10 "efgh"
+(gdb) x/12sb res
+0x7fffffffde10:	"efgh"
+0x7fffffffde15:	""
+
+(gdb) # Breakpoint 3, main() after garbage_stack()
+(gdb) print res
+$2 = 0x7fffffffde10 'U' &lt;repeats 80 times&gt;, "p\336\377\377\377\177"
+    </pre>
+    <p><strong>The Real Culprit:</strong> The string pointer <code>str + (len - n)</code> into <code>argv[1]</code> was perfectly valid! But returning <code>result</code>'s stack address meant that after <code>garbage_stack()</code> reallocated and overwrote the stack frame with <code>0x55</code> ('U'), the memory at <code>0x7fffffffde10</code> was completely populated with 'U's and had <strong>no null terminator</strong>.</p>
+    <p>When <code>printf("%s", res)</code> was called, it did not stop at a null terminator because none existed. Instead, it continued reading down the stack past the buffer size looking for a <code>\0</code> null byte. If it walks off the page into unmapped memory, a segfault is triggered.</p>
+
+    <h2>Silicon Mechanics: GPF vs. Page Fault</h2>
+    <p>We traced two different modes of pointer corruption crashes to see how the CPU silicon reacted.</p>
+
+    <h3>Case A: Non-Canonical Address Corruption (GPF)</h3>
+    <p>If the pointer address itself gets mangled to a non-canonical address like <code>0x5555555555555555</code>, the CPU MMU detects the violation of virtual address sign-extension rules and generates a <strong>General Protection Fault (GPF, Interrupt 13)</strong>. The kernel logs a GPF trap direct from silicon:</p>
+    <pre>
+[ 3250.873323] traps: buggy[238340] general protection fault ip:760bd5d8b7dd sp:7ffc3ffad408 error:0 in libc.so.6
+    </pre>
+
+    <h3>Case B: Canonical Unmapped Address Corruption (Page Fault)</h3>
+    <p>If the pointer points to a canonical but unmapped address (like `0x123456789000`), the CPU MMU attempts a page table walk. It fails (PTE not present) and triggers a <strong>Page Fault (PF, Interrupt 14)</strong>. This routes to the kernel's Page Fault exception handler and issues a <code>force_sig_fault</code>, captured here by our kprobe driver:</p>
+    <pre>
+[ 3278.126297] buggy[238451]: segfault at 123456789000 ip 00007229c558b7dd sp 00007ffc38c6a4f8 error 4 in libc.so.6
+[ 3278.126331] KPROBE CRASH: force_sig_fault triggered by 'buggy' (pid: 238451)!
+[ 3278.126336]   Signal: 11, Code: 1 (SEGV_MAPERR), Faulting Address: 0x123456789000
     </pre>
 
     <div class="callout">
-        <strong>Key Insight:</strong> Pointer corruption crashes behave completely differently depending on the virtual address. A non-canonical load causes an immediate <strong>General Protection Fault</strong>, bypassing page table walks entirely. A canonical but unallocated address forces a complete page table traversal before failing with a <strong>Page Fault</strong>.
-    </div>
-
-    <div class="grill">
-        <strong>Grill:</strong> Why does x86_64 enforce canonical addresses? What is the size of the virtual address space under a 48-bit layout, and why does this layout make canonical check extremely fast in silicon?
+        <strong>Key Discovery:</strong> The true source of the segmentation fault is the escape of the local automatic stack variable. Once returned, subsequent function calls overwrite it. <code>printf</code>'s null byte search then overflows the invalid memory, leading to either arbitrary stack leakage or a page-boundary-crossing segmentation fault.
     </div>
 </article>
 <footer>Disk Bytes to DRAM Frames — <a href="index.html" style="color:var(--accent);">Back to index</a></footer>
