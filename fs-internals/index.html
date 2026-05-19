@@ -240,7 +240,7 @@
     <h1>Disk Bytes to <span>DRAM Frames</span></h1>
     <p>How bytes move from spinning platters through kernel buffers into your program's address space. Every post shows real offsets, real hex dumps, real register values.</p>
     <div class="hero-stats">
-        <div class="hero-stat"><div class="num" id="post-count">3</div><div class="lbl">Posts</div></div>
+        <div class="hero-stat"><div class="num" id="post-count">4</div><div class="lbl">Posts</div></div>
         <div class="hero-stat"><div class="num">12</div><div class="lbl">Topics</div></div>
         <div class="hero-stat"><div class="num">0x1000</div><div class="lbl">Bytes/Page</div></div>
     </div>
@@ -295,20 +295,28 @@
             </div>
         </a>
 
+        <a href="post04-tracing-stack-crash.html" class="post-card">
+            <div class="post-meta">
+                <span class="post-num">#04</span>
+                <span class="post-date">May 2026</span>
+            </div>
+            <h3>Tracing Stack Crash with Real Data (GPF vs. Page Fault)</h3>
+            <p>When a corrupted stack pointer is dereferenced, the OS acts completely differently depending on the virtual address. A non-canonical address triggers a GPF, bypassing the Page Fault handler entirely.</p>
+            <div class="post-tags">
+                <span class="post-tag tag-kernel">kernel kprobe</span>
+                <span class="post-tag tag-mem">MMU page fault</span>
+            </div>
+        </a>
+
     </div>
 
     <div class="upcoming">
         <h2><i class="fas fa-clock"></i> Coming Next</h2>
         <div class="upcoming-list">
             <div class="upcoming-item">
-                <span class="idx">04</span>
+                <span class="idx">05</span>
                 <span class="title">How ext4 Maps File Byte Offsets to Disk Blocks (Extent Records)</span>
                 <span class="status status-wip">DRAFTING</span>
-            </div>
-            <div class="upcoming-item">
-                <span class="idx">05</span>
-                <span class="title">The Write Path: User Buffer → DRAM Copy → Disk Sector</span>
-                <span class="status status-planned">PLANNED</span>
             </div>
             <div class="upcoming-item">
                 <span class="idx">06</span>

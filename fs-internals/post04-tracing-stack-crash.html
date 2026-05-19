@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>#04: Tracing Stack Crash with Real Data (GPF vs. Page Fault)</title>
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600;700&family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        :root { --bg: #06080c; --bg2: #0c1018; --card: #111827; --border: #1e293b; --t1: #e2e8f0; --t2: #64748b; --t3: #94a3b8; --accent: #38bdf8; --accent2: #818cf8; --green: #34d399; --orange: #fb923c; --accent3: #f472b6; --mono: 'JetBrains Mono', monospace; --sans: 'Inter', sans-serif; }
+        body { background: var(--bg); color: var(--t1); font-family: var(--sans); line-height: 1.7; }
+        .back { display: inline-flex; align-items: center; gap: 0.4rem; color: var(--t2); text-decoration: none; font-size: 0.8rem; padding: 1.5rem 2rem; }
+        .back:hover { color: var(--accent); }
+        article { max-width: 720px; margin: 0 auto; padding: 0 2rem 4rem; }
+        .post-num { font-family: var(--mono); font-size: 0.7rem; font-weight: 700; color: var(--accent); padding: 0.2rem 0.6rem; background: rgba(56,189,248,0.1); border-radius: 4px; display: inline-block; margin-bottom: 0.8rem; }
+        h1 { font-size: 1.8rem; font-weight: 800; line-height: 1.2; margin-bottom: 0.5rem; }
+        .date { font-size: 0.75rem; color: var(--t2); margin-bottom: 2rem; }
+        h2 { font-size: 1.15rem; font-weight: 700; margin: 2rem 0 0.8rem; border-left: 3px solid var(--accent); padding-left: 0.8rem; }
+        p { margin-bottom: 1rem; color: var(--t3); font-size: 0.92rem; }
+        pre { background: var(--card); border: 1px solid var(--border); border-radius: 8px; padding: 1.2rem; overflow-x: auto; margin-bottom: 1.5rem; font-family: var(--mono); font-size: 0.78rem; color: var(--green); line-height: 1.6; }
+        code { font-family: var(--mono); font-size: 0.85em; background: rgba(56,189,248,0.08); padding: 0.1rem 0.35rem; border-radius: 3px; color: var(--accent); }
+        .callout { background: rgba(56,189,248,0.06); border: 1px solid rgba(56,189,248,0.15); border-radius: 8px; padding: 1rem 1.2rem; margin-bottom: 1.5rem; font-size: 0.85rem; }
+        .callout strong { color: var(--accent); }
+        .grill { background: rgba(251,146,60,0.08); border: 1px solid rgba(251,146,60,0.2); border-radius: 8px; padding: 1rem 1.2rem; margin: 2rem 0; font-size: 0.85rem; }
+        .grill strong { color: var(--orange); }
+        .step { background: var(--card); border: 1px solid var(--border); border-radius: 8px; padding: 1rem 1.2rem; margin-bottom: 1rem; }
+        .step-num { font-family: var(--mono); font-size: 0.7rem; font-weight: 700; color: var(--accent2); }
+        .step p { margin-bottom: 0; }
+        footer { text-align: center; padding: 2rem; font-size: 0.7rem; color: var(--t2); border-top: 1px solid var(--border); }
+    </style>
+</head>
+<body>
+<a href="index.html" class="back">← Back to all posts</a>
+<article>
+    <span class="post-num">#04</span>
+    <h1>Tracing Stack Crash with Real Data: GPF vs. Page Fault</h1>
+    <div class="date">May 2026</div>
+
+    <h2>The Premise</h2>
+    <p>Returning a stack pointer from a C/C++ function is a classic undefined behavior bug. When the function returns, its frame is destroyed. If you call another function, it overwrites the stack memory. When the caller tries to dereference that corrupted pointer, a crash occurs. But exactly what does the silicon and the kernel do in this scenario? We set out to find out using real kernel probes (kprobes).</p>
+
+    <h2>The Experiment</h2>
+    <p>We wrote a buggy C program that allocated a local buffer on the stack, returned its address, called a stack-corrupting function <code>garbage_stack()</code>, and then attempted to dereference the corrupted pointer. We tested two variants of pointer corruption to see how the CPU and OS reacted.</p>
+
+    <h2>Case A: Non-Canonical Address Corruption (GPF)</h2>
+    <p>In the first case, we mangled the pointer to a completely invalid address: <code>0x5555555555555555</code>. When we ran the program, the kernel immediately logged this in <code>dmesg</code>:</p>
+    <pre>
+[ 3250.873323] traps: buggy[238340] general protection fault ip:760bd5d8b7dd sp:7ffc3ffad408 error:0 in libc.so.6[18b7dd,760bd5c28000+188000]
+    </pre>
+    <p><strong>Silicon Mechanics:</strong> On x86_64, a virtual address must be in <em>canonical form</em>: bits 48 through 63 must be identical copies of bit 47. The address <code>0x5555555555555555</code> violates this rule. When the MMU attempts to decode a non-canonical address, it bypasses the normal page fault logic entirely and fires a <strong>General Protection Fault (GPF, Interrupt 13)</strong>. The kernel's GPF handler directly kills the process by issuing a <code>force_sig</code> call.</p>
+
+    <h2>Case B: Canonical but Unmapped Address Corruption (Page Fault)</h2>
+    <p>In the second case, we set the corrupted pointer to a canonical user space address that is completely unmapped: <code>0x123456789000</code>. This time, our custom kprobe placed at <code>force_sig_fault</code> captured the crash perfectly:</p>
+    <pre>
+[ 3278.126297] buggy[238451]: segfault at 123456789000 ip 00007229c558b7dd sp 00007ffc38c6a4f8 error 4 in libc.so.6[18b7dd,7229c5428000+188000]
+[ 3278.126331] KPROBE CRASH: force_sig_fault triggered by 'buggy' (pid: 238451)!
+[ 3278.126336]   Signal: 11, Code: 1, Faulting Address: 0x123456789000
+    </pre>
+
+    <h2>Silicon & Kernel Walk (Page Fault Scenario)</h2>
+    <div class="step">
+        <span class="step-num">STEP 1: CPU MMU triggers Page Fault (Interrupt 14)</span>
+        <p>The address <code>0x123456789000</code> is canonical, so the CPU attempts to walk the 4-level page table. It finds no entry (PTE is not present). The CPU suspends the thread and generates a <strong>Page Fault (Interrupt 14)</strong>, loading the faulting address into the <code>CR2</code> register.</p>
+    </div>
+
+    <div class="step">
+        <span class="step-num">STEP 2: Kernel Exception Handler</span>
+        <p>The kernel catches Interrupt 14 in <code>exc_page_fault()</code>, which calls <code>do_user_addr_fault()</code>. It searches the process's active Virtual Memory Areas (VMAs) in <code>find_vma()</code>. It finds that <code>0x123456789000</code> is completely outside any valid allocated region.</p>
+    </div>
+
+    <div class="step">
+        <span class="step-num">STEP 3: force_sig_fault Call</span>
+        <p>Since the address has no VMA, the kernel calls <code>bad_area</code>, which ultimately routes to <code>force_sig_fault(SIGSEGV, SEGV_MAPERR, 0x123456789000)</code>. This helper builds a signal info struct and delivers <code>SIGSEGV</code> directly to the process.</p>
+    </div>
+
+    <h2>The Kernel Driver Code (kprobe_crash.c)</h2>
+    <p>To capture this, we loaded a kernel module that registers a probe at <code>force_sig_fault</code>. It extracts registers from the hardware stack and logs the crash parameters to `dmesg`:</p>
+    <pre>
+#include &lt;linux/module.h&gt;
+#include &lt;linux/kprobes.h&gt;
+#include &lt;linux/sched.h&gt;
+
+static struct kprobe kp = {
+    .symbol_name = "force_sig_fault",
+};
+
+static int handler_pre(struct kprobe *p, struct pt_regs *regs)
+{
+    if (strcmp(current->comm, "buggy") == 0) {
+        int sig = (int)regs->di;
+        int code = (int)regs->si;
+        unsigned long addr = (unsigned long)regs->dx;
+
+        pr_info("KPROBE CRASH: force_sig_fault triggered by '%s' (pid: %d)!\n",
+                current->comm, current->pid);
+        pr_info("  Signal: %d, Code: %d, Faulting Address: 0x%lx\n",
+                sig, code, addr);
+    }
+    return 0;
+}
+    </pre>
+
+    <div class="callout">
+        <strong>Key Insight:</strong> Pointer corruption crashes behave completely differently depending on the virtual address. A non-canonical load causes an immediate <strong>General Protection Fault</strong>, bypassing page table walks entirely. A canonical but unallocated address forces a complete page table traversal before failing with a <strong>Page Fault</strong>.
+    </div>
+
+    <div class="grill">
+        <strong>Grill:</strong> Why does x86_64 enforce canonical addresses? What is the size of the virtual address space under a 48-bit layout, and why does this layout make canonical check extremely fast in silicon?
+    </div>
+</article>
+<footer>Disk Bytes to DRAM Frames — <a href="index.html" style="color:var(--accent);">Back to index</a></footer>
+</body>
+</html>
