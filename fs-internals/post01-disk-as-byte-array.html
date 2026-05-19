@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>#01: The Disk Is Just a Numbered Array of 512-Byte Slots</title>
+    <meta name="description" content="Every disk, spinning or solid-state, presents itself as slot[0], slot[1], slot[2]... Each slot holds exactly 512 bytes. That is the entire hardware contract.">
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600;700&family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        :root {
+            --bg: #06080c; --bg2: #0c1018; --card: #111827; --border: #1e293b;
+            --t1: #e2e8f0; --t2: #64748b; --t3: #94a3b8;
+            --accent: #38bdf8; --accent2: #818cf8; --green: #34d399;
+            --orange: #fb923c; --accent3: #f472b6;
+            --mono: 'JetBrains Mono', monospace; --sans: 'Inter', sans-serif;
+        }
+        body { background: var(--bg); color: var(--t1); font-family: var(--sans); line-height: 1.7; }
+        .back { display: inline-flex; align-items: center; gap: 0.4rem; color: var(--t2); text-decoration: none; font-size: 0.8rem; padding: 1.5rem 2rem; }
+        .back:hover { color: var(--accent); }
+        article { max-width: 720px; margin: 0 auto; padding: 0 2rem 4rem; }
+        .post-num { font-family: var(--mono); font-size: 0.7rem; font-weight: 700; color: var(--accent); padding: 0.2rem 0.6rem; background: rgba(56,189,248,0.1); border-radius: 4px; display: inline-block; margin-bottom: 0.8rem; }
+        h1 { font-size: 1.8rem; font-weight: 800; line-height: 1.2; margin-bottom: 0.5rem; }
+        .date { font-size: 0.75rem; color: var(--t2); margin-bottom: 2rem; }
+        h2 { font-size: 1.15rem; font-weight: 700; margin: 2rem 0 0.8rem; border-left: 3px solid var(--accent); padding-left: 0.8rem; }
+        p { margin-bottom: 1rem; color: var(--t3); font-size: 0.92rem; }
+        pre { background: var(--card); border: 1px solid var(--border); border-radius: 8px; padding: 1.2rem; overflow-x: auto; margin-bottom: 1.5rem; font-family: var(--mono); font-size: 0.78rem; color: var(--green); line-height: 1.6; }
+        code { font-family: var(--mono); font-size: 0.85em; background: rgba(56,189,248,0.08); padding: 0.1rem 0.35rem; border-radius: 3px; color: var(--accent); }
+        .callout { background: rgba(56,189,248,0.06); border: 1px solid rgba(56,189,248,0.15); border-radius: 8px; padding: 1rem 1.2rem; margin-bottom: 1.5rem; font-size: 0.85rem; }
+        .callout strong { color: var(--accent); }
+        .grill { background: rgba(251,146,60,0.08); border: 1px solid rgba(251,146,60,0.2); border-radius: 8px; padding: 1rem 1.2rem; margin: 2rem 0; font-size: 0.85rem; }
+        .grill strong { color: var(--orange); }
+        footer { text-align: center; padding: 2rem; font-size: 0.7rem; color: var(--t2); border-top: 1px solid var(--border); }
+    </style>
+</head>
+<body>
+<a href="index.html" class="back">← Back to all posts</a>
+<article>
+    <span class="post-num">#01</span>
+    <h1>The Disk Is Just a Numbered Array of 512-Byte Slots</h1>
+    <div class="date">May 2026</div>
+
+    <h2>The Contract</h2>
+    <p>Every storage device — spinning platter, NAND flash, NVMe stick — presents one interface to the silicon that reads instructions: an array of fixed-size slots numbered 0, 1, 2, 3, ...</p>
+    <p>Each slot holds exactly <strong>512 bytes</strong>. The numbering scheme is called LBA (Logical Block Addressing). Slot 0 is at byte offset 0. Slot 1 is at byte offset 512. Slot N is at byte offset N * 512.</p>
+
+    <pre>
+Slot 0:   bytes [0x000 .. 0x1FF]     (0   .. 511)
+Slot 1:   bytes [0x200 .. 0x3FF]     (512 .. 1023)
+Slot 2:   bytes [0x400 .. 0x5FF]     (1024 .. 1535)
+...
+Slot N:   bytes [N*512 .. N*512+511]
+    </pre>
+
+    <h2>Two Operations, Nothing Else</h2>
+    <p>The silicon sends exactly two commands to the disk controller:</p>
+    <pre>
+READ(slot_number, count)   → returns count * 512 bytes
+WRITE(slot_number, data)   → overwrites 512 bytes at that slot
+    </pre>
+    <p>That's it. The disk knows nothing about files, directories, permissions, timestamps, or names. Those are inventions layered on top by software running in ring 0.</p>
+
+    <h2>Real Numbers on a Real Disk</h2>
+    <p>A 256 GB SSD has 256 * 1024^3 / 512 = <strong>500,000,000 slots</strong> (500 million). Slot 0 through slot 499,999,999.</p>
+    <pre>
+Total bytes:  256 * 1073741824 = 274877906944
+Slot count:   274877906944 / 512 = 536870912
+Last slot:    536870911
+    </pre>
+
+    <div class="callout">
+        <strong>Key point:</strong> Modern disks also support 4096-byte "Advanced Format" sectors. The controller either exposes native 4K sectors or emulates 512-byte sectors ("512e") for backward compatibility. The kernel queries this via <code>ioctl(fd, BLKSSZGET, &sz)</code> — the return is 512 or 4096.
+    </div>
+
+    <h2>What the Kernel Sees</h2>
+    <p>When the kernel wants to read slot 100 from /dev/sda, it builds a request with these fields:</p>
+    <pre>
+struct bio {
+    sector_t bi_sector;     /* = 100 (8 bytes, slot number)   */
+    unsigned int bi_size;   /* = 512 (how many bytes)         */
+    int bi_rw;              /* = READ (0) or WRITE (1)        */
+    struct bio_vec *bi_io_vec; /* points to DRAM destination  */
+};
+    </pre>
+    <p>The <code>bi_sector</code> field is the slot number. The device driver translates that to the right electrical signals on the SATA/NVMe bus.</p>
+
+    <h2>Proving It: Read Raw Sectors</h2>
+    <pre>
+/* read sector 0 (the MBR or protective GPT header) */
+/* STEP 1: open the raw disk device */
+int fd = open("/dev/sda", O_RDONLY);
+
+/* STEP 2: read 512 bytes from offset 0 */
+char buf[512];
+pread(fd, buf, 512, 0);  /* offset = sector_number * 512 */
+
+/* STEP 3: first 2 bytes of a GPT protective MBR */
+/* buf[510] = 0x55, buf[511] = 0xAA → boot signature */
+    </pre>
+
+    <div class="grill">
+        <strong>Grill:</strong> A disk has 1,000,000 sectors of 512 bytes each. What is the byte offset of the first byte of sector 750,000? What is the total capacity in MiB? Show the multiplication.
+    </div>
+</article>
+<footer>Disk Bytes to DRAM Frames — <a href="index.html" style="color:var(--accent);">Back to index</a></footer>
+</body>
+</html>

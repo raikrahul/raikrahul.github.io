@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>#02: The First 1024 Bytes Tell You Everything About the Disk Layout</title>
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600;700&family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        :root { --bg: #06080c; --bg2: #0c1018; --card: #111827; --border: #1e293b; --t1: #e2e8f0; --t2: #64748b; --t3: #94a3b8; --accent: #38bdf8; --accent2: #818cf8; --green: #34d399; --orange: #fb923c; --accent3: #f472b6; --mono: 'JetBrains Mono', monospace; --sans: 'Inter', sans-serif; }
+        body { background: var(--bg); color: var(--t1); font-family: var(--sans); line-height: 1.7; }
+        .back { display: inline-flex; align-items: center; gap: 0.4rem; color: var(--t2); text-decoration: none; font-size: 0.8rem; padding: 1.5rem 2rem; }
+        .back:hover { color: var(--accent); }
+        article { max-width: 720px; margin: 0 auto; padding: 0 2rem 4rem; }
+        .post-num { font-family: var(--mono); font-size: 0.7rem; font-weight: 700; color: var(--accent); padding: 0.2rem 0.6rem; background: rgba(56,189,248,0.1); border-radius: 4px; display: inline-block; margin-bottom: 0.8rem; }
+        h1 { font-size: 1.8rem; font-weight: 800; line-height: 1.2; margin-bottom: 0.5rem; }
+        .date { font-size: 0.75rem; color: var(--t2); margin-bottom: 2rem; }
+        h2 { font-size: 1.15rem; font-weight: 700; margin: 2rem 0 0.8rem; border-left: 3px solid var(--accent); padding-left: 0.8rem; }
+        p { margin-bottom: 1rem; color: var(--t3); font-size: 0.92rem; }
+        pre { background: var(--card); border: 1px solid var(--border); border-radius: 8px; padding: 1.2rem; overflow-x: auto; margin-bottom: 1.5rem; font-family: var(--mono); font-size: 0.78rem; color: var(--green); line-height: 1.6; }
+        code { font-family: var(--mono); font-size: 0.85em; background: rgba(56,189,248,0.08); padding: 0.1rem 0.35rem; border-radius: 3px; color: var(--accent); }
+        .callout { background: rgba(56,189,248,0.06); border: 1px solid rgba(56,189,248,0.15); border-radius: 8px; padding: 1rem 1.2rem; margin-bottom: 1.5rem; font-size: 0.85rem; }
+        .callout strong { color: var(--accent); }
+        .grill { background: rgba(251,146,60,0.08); border: 1px solid rgba(251,146,60,0.2); border-radius: 8px; padding: 1rem 1.2rem; margin: 2rem 0; font-size: 0.85rem; }
+        .grill strong { color: var(--orange); }
+        table { width: 100%; border-collapse: collapse; margin-bottom: 1.5rem; font-size: 0.8rem; }
+        th, td { padding: 0.5rem 0.8rem; border: 1px solid var(--border); text-align: left; }
+        th { background: var(--card); color: var(--accent); font-weight: 600; font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.5px; }
+        td { color: var(--t3); }
+        td code { font-size: 0.75rem; }
+        footer { text-align: center; padding: 2rem; font-size: 0.7rem; color: var(--t2); border-top: 1px solid var(--border); }
+    </style>
+</head>
+<body>
+<a href="index.html" class="back">← Back to all posts</a>
+<article>
+    <span class="post-num">#02</span>
+    <h1>The First 1024 Bytes Tell You Everything About the Disk Layout</h1>
+    <div class="date">May 2026</div>
+
+    <h2>Where It Lives</h2>
+    <p>On an ext4 partition, skip the first 1024 bytes (reserved for boot code). At byte offset 1024 sits a 1024-byte record called the superblock. Every number you need to navigate the rest of the disk is in this record.</p>
+    <pre>
+Partition start:  byte 0
+Boot area:        bytes [0 .. 1023]      (1024 bytes, unused by filesystem)
+Superblock:       bytes [1024 .. 2047]   (1024 bytes, the geometry record)
+    </pre>
+
+    <h2>Critical Fields (With Real Byte Offsets)</h2>
+    <p>The superblock is a C struct. Every field has a fixed byte offset from the start of the record. Here are the ones that matter most:</p>
+
+    <table>
+        <tr><th>Offset</th><th>Size</th><th>Field</th><th>What It Tells You</th></tr>
+        <tr><td><code>0x00</code></td><td>4</td><td>s_inodes_count</td><td>Total metadata-record slots on this disk</td></tr>
+        <tr><td><code>0x04</code></td><td>4</td><td>s_blocks_count_lo</td><td>Total 4096-byte blocks (low 32 bits)</td></tr>
+        <tr><td><code>0x18</code></td><td>4</td><td>s_log_block_size</td><td>Block size = 2^(10 + this value). Value 2 → 2^12 = 4096</td></tr>
+        <tr><td><code>0x20</code></td><td>4</td><td>s_blocks_per_group</td><td>How many blocks in each group (typically 32768)</td></tr>
+        <tr><td><code>0x28</code></td><td>4</td><td>s_inodes_per_group</td><td>Metadata-record slots per group</td></tr>
+        <tr><td><code>0x38</code></td><td>2</td><td>s_magic</td><td>Must be <code>0xEF53</code> or this isn't ext2/3/4</td></tr>
+        <tr><td><code>0x58</code></td><td>4</td><td>s_inode_size</td><td>Bytes per metadata-record (256 for ext4)</td></tr>
+        <tr><td><code>0xFE</code></td><td>4</td><td>s_log_groups_per_flex</td><td>2^N groups packed into one flex group</td></tr>
+    </table>
+
+    <h2>Proving It: Hexdump a Real Superblock</h2>
+    <pre>
+# Skip 1024 bytes, read 256 bytes from the superblock
+$ sudo dd if=/dev/sda2 bs=1 skip=1024 count=256 2>/dev/null | xxd | head -20
+
+00000000: c027 0600 004a 1800 0050 0100 8732 1700  .'...J...P...2..
+00000010: 4820 0600 0000 0000 0200 0000 0200 0000  H ..............
+00000020: 0080 0000 0080 0000 2020 0000 ...         ................
+
+Bytes at offset 0x38 (magic): 53 EF  → little-endian → 0xEF53 ✓
+Bytes at offset 0x18 (log_block_size): 02 00 00 00 → value 2
+    block_size = 2^(10+2) = 2^12 = 4096 bytes ✓
+Bytes at offset 0x20 (blocks_per_group): 00 80 00 00 → 0x8000 = 32768
+    group_size = 32768 * 4096 = 134217728 = 128 MiB ✓
+    </pre>
+
+    <h2>Block Groups: The Disk Divided Into 128 MiB Chunks</h2>
+    <p>The entire disk is split into groups. Each group manages its own allocation bitmaps and metadata-record table. With 32768 blocks per group at 4096 bytes each:</p>
+    <pre>
+Group 0:   blocks [0 .. 32767]         bytes [0 .. 134217727]
+Group 1:   blocks [32768 .. 65535]     bytes [134217728 .. 268435455]
+Group 2:   blocks [65536 .. 98303]     bytes [268435456 .. 402653183]
+...
+Group N:   blocks [N*32768 .. (N+1)*32768 - 1]
+    </pre>
+
+    <p>Inside each group, the layout is:</p>
+    <pre>
+[superblock copy?] [group descriptors?] [block bitmap] [metadata-record bitmap] [metadata-record table] [data blocks]
+    </pre>
+    <p>Not every group has a superblock copy — only groups 0, 1, 3, 5, 7, 9, 25, 27, 49, 125, 243, 343, 625, ... (powers of 3, 5, 7 plus groups 0 and 1).</p>
+
+    <h2>How Many Groups on a 1 TB Disk?</h2>
+    <pre>
+Total bytes:     1,000,000,000,000  (1 TB, marketing)
+Total blocks:    1000000000000 / 4096 = 244140625
+Blocks/group:    32768
+Group count:     244140625 / 32768 = 7450.58... → 7451 groups
+    </pre>
+
+    <div class="callout">
+        <strong>The group descriptor table</strong> has one 64-byte record per group. For 7451 groups: 7451 * 64 = 476864 bytes = 116.4 blocks. This table lives right after the superblock in group 0, and is replicated in backup groups.
+    </div>
+
+    <div class="grill">
+        <strong>Grill:</strong> Given s_log_block_size = 0 and s_blocks_per_group = 8192, what is the block size in bytes? What is the group size in bytes? How many groups fit on a 10 GiB partition?
+    </div>
+</article>
+<footer>Disk Bytes to DRAM Frames — <a href="index.html" style="color:var(--accent);">Back to index</a></footer>
+</body>
+</html>

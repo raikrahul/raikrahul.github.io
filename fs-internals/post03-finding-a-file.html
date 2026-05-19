@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>#03: From "/home/r/file.txt" to Actual Bytes on Disk</title>
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600;700&family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        :root { --bg: #06080c; --bg2: #0c1018; --card: #111827; --border: #1e293b; --t1: #e2e8f0; --t2: #64748b; --t3: #94a3b8; --accent: #38bdf8; --accent2: #818cf8; --green: #34d399; --orange: #fb923c; --accent3: #f472b6; --mono: 'JetBrains Mono', monospace; --sans: 'Inter', sans-serif; }
+        body { background: var(--bg); color: var(--t1); font-family: var(--sans); line-height: 1.7; }
+        .back { display: inline-flex; align-items: center; gap: 0.4rem; color: var(--t2); text-decoration: none; font-size: 0.8rem; padding: 1.5rem 2rem; }
+        .back:hover { color: var(--accent); }
+        article { max-width: 720px; margin: 0 auto; padding: 0 2rem 4rem; }
+        .post-num { font-family: var(--mono); font-size: 0.7rem; font-weight: 700; color: var(--accent); padding: 0.2rem 0.6rem; background: rgba(56,189,248,0.1); border-radius: 4px; display: inline-block; margin-bottom: 0.8rem; }
+        h1 { font-size: 1.8rem; font-weight: 800; line-height: 1.2; margin-bottom: 0.5rem; }
+        .date { font-size: 0.75rem; color: var(--t2); margin-bottom: 2rem; }
+        h2 { font-size: 1.15rem; font-weight: 700; margin: 2rem 0 0.8rem; border-left: 3px solid var(--accent); padding-left: 0.8rem; }
+        p { margin-bottom: 1rem; color: var(--t3); font-size: 0.92rem; }
+        pre { background: var(--card); border: 1px solid var(--border); border-radius: 8px; padding: 1.2rem; overflow-x: auto; margin-bottom: 1.5rem; font-family: var(--mono); font-size: 0.78rem; color: var(--green); line-height: 1.6; }
+        code { font-family: var(--mono); font-size: 0.85em; background: rgba(56,189,248,0.08); padding: 0.1rem 0.35rem; border-radius: 3px; color: var(--accent); }
+        .callout { background: rgba(56,189,248,0.06); border: 1px solid rgba(56,189,248,0.15); border-radius: 8px; padding: 1rem 1.2rem; margin-bottom: 1.5rem; font-size: 0.85rem; }
+        .callout strong { color: var(--accent); }
+        .grill { background: rgba(251,146,60,0.08); border: 1px solid rgba(251,146,60,0.2); border-radius: 8px; padding: 1rem 1.2rem; margin: 2rem 0; font-size: 0.85rem; }
+        .grill strong { color: var(--orange); }
+        .step { background: var(--card); border: 1px solid var(--border); border-radius: 8px; padding: 1rem 1.2rem; margin-bottom: 1rem; }
+        .step-num { font-family: var(--mono); font-size: 0.7rem; font-weight: 700; color: var(--accent2); }
+        .step p { margin-bottom: 0; }
+        footer { text-align: center; padding: 2rem; font-size: 0.7rem; color: var(--t2); border-top: 1px solid var(--border); }
+    </style>
+</head>
+<body>
+<a href="index.html" class="back">← Back to all posts</a>
+<article>
+    <span class="post-num">#03</span>
+    <h1>From "/home/r/file.txt" to the Actual Bytes on Disk</h1>
+    <div class="date">May 2026</div>
+
+    <h2>The Problem</h2>
+    <p>You have a string: <code>"/home/r/file.txt"</code>. You want the bytes of that file. Between your string and those bytes sit at minimum <strong>4 disk reads</strong> and a chain of integer lookups.</p>
+
+    <h2>Step-by-Step Walk (ext4, 4096-byte blocks, 256-byte metadata records)</h2>
+
+    <div class="step">
+        <span class="step-num">STEP 1: Start at metadata record #2 (the root "/")</span>
+        <p>The filesystem reserves record #2 for the root. To find it on disk:</p>
+        <pre>
+group = (2 - 1) / inodes_per_group = 1 / 8192 = 0  (group 0)
+index = (2 - 1) % inodes_per_group = 1
+byte_offset_in_table = 1 * 256 = 256
+
+The metadata-record table for group 0 starts at some block B
+(read from the group descriptor table).
+Read block B, seek to offset 256 within it → that's the root's record.
+        </pre>
+    </div>
+
+    <div class="step">
+        <span class="step-num">STEP 2: Read root's data blocks → search for "home"</span>
+        <p>The root's metadata record has an extent array. The first extent says: file block 0 maps to physical block P. Read block P from disk. It contains a name-to-number table:</p>
+        <pre>
+Offset  Record-#  Name-len  Name
+0x00    2         1         "."
+0x0C    2         2         ".."
+0x18    131073    4         "home"     ← found it! record number = 131073
+0x28    393217    3         "usr"
+...
+        </pre>
+        <p>Each entry is: [4-byte record number] [2-byte entry length] [1-byte name length] [1-byte file type] [name bytes].</p>
+    </div>
+
+    <div class="step">
+        <span class="step-num">STEP 3: Load metadata record #131073 → search for "r"</span>
+        <pre>
+group = (131073 - 1) / 8192 = 16  (group 16)
+index = (131073 - 1) % 8192 = 0
+byte_offset = 0 * 256 = 0
+
+Read the metadata-record table block for group 16.
+Read the data blocks of record #131073.
+Search the name-to-number table for "r".
+Found: record number = 131074
+        </pre>
+    </div>
+
+    <div class="step">
+        <span class="step-num">STEP 4: Load metadata record #131074 → search for "file.txt"</span>
+        <pre>
+group = (131074 - 1) / 8192 = 16
+index = (131074 - 1) % 8192 = 1
+byte_offset = 1 * 256 = 256
+
+Read that record. Read its data blocks.
+Search name-to-number table for "file.txt".
+Found: record number = 131080
+        </pre>
+    </div>
+
+    <div class="step">
+        <span class="step-num">STEP 5: Load metadata record #131080 → read the file's data</span>
+        <pre>
+This record is NOT a directory, it's a regular file.
+Fields we care about:
+  i_size = 8500          (file is 8500 bytes)
+  i_block[0..3] holds extent records:
+    extent 0: logical block 0, physical block 525000, length 3
+
+Read physical blocks 525000, 525001, 525002 from disk.
+Concatenate. Trim to 8500 bytes. Done.
+        </pre>
+    </div>
+
+    <h2>Disk Reads Counted</h2>
+    <pre>
+Read 1: root metadata record (#2)
+Read 2: root's data block (name-to-number table of "/")
+Read 3: record #131073 (the "home" directory metadata)
+Read 4: "home"'s data block (name-to-number table)
+Read 5: record #131074 ("r" directory metadata)
+Read 6: "r"'s data block
+Read 7: record #131080 ("file.txt" metadata)
+Read 8: file.txt's data blocks (3 blocks)
+
+Total: 8 disk reads minimum for /home/r/file.txt
+    </pre>
+
+    <div class="callout">
+        <strong>DRAM caching saves most of these.</strong> The kernel keeps recently-read metadata records and name-to-number tables in DRAM. The root directory data is almost always cached. In practice, reading /home/r/file.txt might cost only 1-2 actual disk reads.
+    </div>
+
+    <h2>Why the In-Memory Name Cache Matters</h2>
+    <p>The kernel maintains an in-memory table mapping (parent_record_number, name_string) → child_record_number. After the first walk, the pair (2, "home") → 131073 is cached. Next access skips the disk entirely for that component.</p>
+    <pre>
+Cache hit rate for "/" → ~100%    (always cached)
+Cache hit rate for "/home" → ~99% (almost always cached)
+Cache hit rate for "/home/r" → ~95%
+Cache hit rate for deep paths → varies by access pattern
+    </pre>
+
+    <h2>ext4 Name-to-Number Table Entry Layout (On Disk)</h2>
+    <pre>
+Bytes [0..3]:   4-byte record number (little-endian)
+Bytes [4..5]:   2-byte total entry length (for padding/alignment)
+Byte  [6]:      1-byte name length
+Byte  [7]:      1-byte file type (1=regular, 2=directory, 7=symlink)
+Bytes [8..N]:   name characters (NOT null-terminated on disk)
+    </pre>
+    <p>Minimum entry size: 8 + 1 = 9 bytes, rounded to 4-byte boundary = 12 bytes. Maximum name: 255 bytes.</p>
+
+    <div class="grill">
+        <strong>Grill:</strong> If s_inodes_per_group = 8192 and s_inode_size = 256, how many 4096-byte blocks does each group's metadata-record table occupy? Show the math. What is the byte offset of record #8193 within the table?
+    </div>
+</article>
+<footer>Disk Bytes to DRAM Frames — <a href="index.html" style="color:var(--accent);">Back to index</a></footer>
+</body>
+</html>

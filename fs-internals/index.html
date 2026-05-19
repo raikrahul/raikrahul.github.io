@@ -1,0 +1,358 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Disk Bytes to DRAM Frames | Filesystem Internals Blog</title>
+    <meta name="description" content="Learning filesystem internals from the ground up: real byte offsets, real disk sectors, real DRAM frames. No shortcuts.">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600;700&family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        :root {
+            --bg: #06080c;
+            --bg2: #0c1018;
+            --card: #111827;
+            --card-h: #1a2235;
+            --border: #1e293b;
+            --t1: #e2e8f0;
+            --t2: #64748b;
+            --t3: #94a3b8;
+            --accent: #38bdf8;   /* sky blue */
+            --accent2: #818cf8;  /* indigo */
+            --accent3: #f472b6; /* pink */
+            --green: #34d399;
+            --orange: #fb923c;
+            --mono: 'JetBrains Mono', monospace;
+            --sans: 'Inter', -apple-system, sans-serif;
+        }
+
+        body {
+            background: var(--bg);
+            color: var(--t1);
+            font-family: var(--sans);
+            line-height: 1.6;
+            min-height: 100vh;
+        }
+
+        /* --- HERO --- */
+        .hero {
+            position: relative;
+            padding: 4rem 2rem 3rem;
+            text-align: center;
+            overflow: hidden;
+            border-bottom: 1px solid var(--border);
+        }
+        .hero::before {
+            content: '';
+            position: absolute;
+            top: -120px; left: 50%; transform: translateX(-50%);
+            width: 600px; height: 600px;
+            background: radial-gradient(circle, rgba(56,189,248,0.08) 0%, transparent 70%);
+            pointer-events: none;
+        }
+        .hero-badge {
+            display: inline-flex; align-items: center; gap: 0.5rem;
+            padding: 0.35rem 1rem;
+            background: rgba(56,189,248,0.08);
+            border: 1px solid rgba(56,189,248,0.2);
+            border-radius: 999px;
+            font-size: 0.72rem; font-weight: 600;
+            color: var(--accent);
+            margin-bottom: 1.2rem;
+            letter-spacing: 0.5px;
+        }
+        .hero-badge .dot { width: 6px; height: 6px; border-radius: 50%; background: var(--green); animation: pulse 2s infinite; }
+        @keyframes pulse { 0%,100% { opacity: 1; } 50% { opacity: 0.3; } }
+        .hero h1 {
+            font-size: clamp(1.8rem, 4vw, 3rem);
+            font-weight: 800;
+            letter-spacing: -0.02em;
+            line-height: 1.15;
+            margin-bottom: 0.6rem;
+        }
+        .hero h1 span { background: linear-gradient(135deg, var(--accent), var(--accent2)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+        .hero p {
+            font-size: 1rem;
+            color: var(--t3);
+            max-width: 540px;
+            margin: 0 auto;
+        }
+        .hero-stats {
+            display: flex; justify-content: center; gap: 2.5rem;
+            margin-top: 2rem;
+        }
+        .hero-stat { text-align: center; }
+        .hero-stat .num { font-size: 1.5rem; font-weight: 700; font-family: var(--mono); color: var(--accent); }
+        .hero-stat .lbl { font-size: 0.65rem; color: var(--t2); text-transform: uppercase; letter-spacing: 1px; }
+
+        /* --- NAV --- */
+        .nav {
+            display: flex; justify-content: center; gap: 0.4rem;
+            padding: 1rem 2rem;
+            border-bottom: 1px solid var(--border);
+            background: var(--bg2);
+            position: sticky; top: 0; z-index: 100;
+            backdrop-filter: blur(12px);
+        }
+        .nav a {
+            font-size: 0.75rem; font-weight: 600;
+            color: var(--t2); text-decoration: none;
+            padding: 0.45rem 1rem;
+            border-radius: 6px;
+            transition: all 0.2s;
+        }
+        .nav a:hover, .nav a.active { color: var(--accent); background: rgba(56,189,248,0.08); }
+        .nav a i { margin-right: 0.3rem; }
+
+        /* --- GRID --- */
+        .container { max-width: 1100px; margin: 0 auto; padding: 2rem 1.5rem; }
+        .posts-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+            gap: 1.2rem;
+        }
+
+        /* --- POST CARD --- */
+        .post-card {
+            background: var(--card);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 1.5rem;
+            text-decoration: none;
+            color: var(--t1);
+            transition: all 0.25s;
+            position: relative;
+            overflow: hidden;
+        }
+        .post-card::before {
+            content: '';
+            position: absolute; top: 0; left: 0;
+            width: 100%; height: 3px;
+            background: linear-gradient(90deg, var(--accent), var(--accent2));
+            opacity: 0; transition: opacity 0.25s;
+        }
+        .post-card:hover { background: var(--card-h); transform: translateY(-2px); border-color: rgba(56,189,248,0.3); }
+        .post-card:hover::before { opacity: 1; }
+
+        .post-meta {
+            display: flex; align-items: center; gap: 0.5rem;
+            margin-bottom: 0.8rem;
+        }
+        .post-num {
+            font-family: var(--mono);
+            font-size: 0.65rem; font-weight: 700;
+            color: var(--accent);
+            padding: 0.2rem 0.5rem;
+            background: rgba(56,189,248,0.1);
+            border-radius: 4px;
+        }
+        .post-date { font-size: 0.65rem; color: var(--t2); }
+
+        .post-card h3 {
+            font-size: 1.05rem; font-weight: 700;
+            margin-bottom: 0.5rem;
+            line-height: 1.3;
+        }
+        .post-card p {
+            font-size: 0.8rem;
+            color: var(--t3);
+            line-height: 1.5;
+            margin-bottom: 1rem;
+        }
+        .post-tags { display: flex; flex-wrap: wrap; gap: 0.3rem; }
+        .post-tag {
+            font-size: 0.6rem; font-weight: 600;
+            padding: 0.15rem 0.45rem;
+            border-radius: 4px;
+            text-transform: uppercase;
+            letter-spacing: 0.3px;
+        }
+        .tag-disk { background: rgba(251,146,60,0.12); color: var(--orange); }
+        .tag-mem { background: rgba(52,211,153,0.12); color: var(--green); }
+        .tag-kernel { background: rgba(129,140,248,0.12); color: var(--accent2); }
+        .tag-bytes { background: rgba(244,114,182,0.12); color: var(--accent3); }
+
+        /* --- UPCOMING --- */
+        .upcoming {
+            margin-top: 2.5rem;
+            padding: 1.5rem;
+            background: var(--card);
+            border: 1px dashed var(--border);
+            border-radius: 12px;
+        }
+        .upcoming h2 {
+            font-size: 0.7rem; font-weight: 700;
+            color: var(--t2); text-transform: uppercase;
+            letter-spacing: 1px; margin-bottom: 1rem;
+        }
+        .upcoming h2 i { color: var(--orange); margin-right: 0.4rem; }
+        .upcoming-list { display: flex; flex-direction: column; gap: 0.5rem; }
+        .upcoming-item {
+            display: flex; align-items: center; gap: 0.7rem;
+            padding: 0.6rem 0.8rem;
+            border-radius: 8px;
+            background: var(--bg);
+            border: 1px solid var(--border);
+        }
+        .upcoming-item .idx {
+            font-family: var(--mono);
+            font-size: 0.6rem; font-weight: 700;
+            color: var(--t2);
+            width: 28px; height: 28px;
+            display: flex; align-items: center; justify-content: center;
+            background: var(--card);
+            border-radius: 6px;
+        }
+        .upcoming-item .title { font-size: 0.8rem; font-weight: 500; }
+        .upcoming-item .status {
+            margin-left: auto;
+            font-size: 0.6rem; font-weight: 600;
+            padding: 0.15rem 0.5rem;
+            border-radius: 4px;
+        }
+        .status-wip { background: rgba(251,146,60,0.12); color: var(--orange); }
+        .status-planned { background: rgba(100,116,139,0.15); color: var(--t2); }
+
+        /* --- FOOTER --- */
+        footer {
+            margin-top: 3rem;
+            padding: 1.5rem 2rem;
+            text-align: center;
+            font-size: 0.7rem;
+            color: var(--t2);
+            border-top: 1px solid var(--border);
+        }
+        footer a { color: var(--accent); text-decoration: none; }
+        footer i.fa-heart { color: var(--accent3); }
+
+        @media (max-width: 700px) {
+            .hero { padding: 2.5rem 1.5rem 2rem; }
+            .hero-stats { gap: 1.5rem; }
+            .posts-grid { grid-template-columns: 1fr; }
+        }
+    </style>
+</head>
+<body>
+
+<div class="hero">
+    <div class="hero-badge"><span class="dot"></span> LEARNING IN PUBLIC</div>
+    <h1>Disk Bytes to <span>DRAM Frames</span></h1>
+    <p>How bytes move from spinning platters through kernel buffers into your program's address space. Every post shows real offsets, real hex dumps, real register values.</p>
+    <div class="hero-stats">
+        <div class="hero-stat"><div class="num" id="post-count">3</div><div class="lbl">Posts</div></div>
+        <div class="hero-stat"><div class="num">12</div><div class="lbl">Topics</div></div>
+        <div class="hero-stat"><div class="num">0x1000</div><div class="lbl">Bytes/Page</div></div>
+    </div>
+</div>
+
+<nav class="nav">
+    <a href="../index.html"><i class="fas fa-home"></i> Home</a>
+    <a href="index.html" class="active"><i class="fas fa-hard-drive"></i> FS Internals</a>
+    <a href="../modern-cpp/index.html"><i class="fas fa-bolt"></i> C++</a>
+    <a href="../rdmabasics/index.html"><i class="fas fa-network-wired"></i> RDMA</a>
+</nav>
+
+<div class="container">
+    <div class="posts-grid">
+
+        <a href="post01-disk-as-byte-array.html" class="post-card">
+            <div class="post-meta">
+                <span class="post-num">#01</span>
+                <span class="post-date">May 2026</span>
+            </div>
+            <h3>The Disk Is Just a Numbered Array of 512-Byte Slots</h3>
+            <p>Every spinning platter and every SSD cell exposes the same interface to the silicon: read slot N, write slot N. Each slot is 512 bytes. That's the entire contract.</p>
+            <div class="post-tags">
+                <span class="post-tag tag-disk">512-byte sectors</span>
+                <span class="post-tag tag-bytes">LBA addressing</span>
+            </div>
+        </a>
+
+        <a href="post02-superblock-geometry.html" class="post-card">
+            <div class="post-meta">
+                <span class="post-num">#02</span>
+                <span class="post-date">May 2026</span>
+            </div>
+            <h3>The First 1024 Bytes Tell You Everything About the Disk Layout</h3>
+            <p>At byte offset 1024 from the start of the partition sits a 1024-byte record. It holds total block count, block size exponent, blocks-per-group, and free counts.</p>
+            <div class="post-tags">
+                <span class="post-tag tag-disk">ext4 geometry</span>
+                <span class="post-tag tag-bytes">struct offsets</span>
+            </div>
+        </a>
+
+        <a href="post03-finding-a-file.html" class="post-card">
+            <div class="post-meta">
+                <span class="post-num">#03</span>
+                <span class="post-date">May 2026</span>
+            </div>
+            <h3>From "/home/r/file.txt" to the Actual Bytes on Disk</h3>
+            <p>Split the path into ["home", "r", "file.txt"]. Start at metadata-record #2 (the root). Walk each name-to-number table. Each step costs one disk read minimum.</p>
+            <div class="post-tags">
+                <span class="post-tag tag-kernel">path resolution</span>
+                <span class="post-tag tag-mem">name-to-number table</span>
+            </div>
+        </a>
+
+    </div>
+
+    <div class="upcoming">
+        <h2><i class="fas fa-clock"></i> Coming Next</h2>
+        <div class="upcoming-list">
+            <div class="upcoming-item">
+                <span class="idx">04</span>
+                <span class="title">How ext4 Maps File Byte Offsets to Disk Blocks (Extent Records)</span>
+                <span class="status status-wip">DRAFTING</span>
+            </div>
+            <div class="upcoming-item">
+                <span class="idx">05</span>
+                <span class="title">The Write Path: User Buffer → DRAM Copy → Disk Sector</span>
+                <span class="status status-planned">PLANNED</span>
+            </div>
+            <div class="upcoming-item">
+                <span class="idx">06</span>
+                <span class="title">What fsync() Actually Guarantees (and What It Doesn't)</span>
+                <span class="status status-planned">PLANNED</span>
+            </div>
+            <div class="upcoming-item">
+                <span class="idx">07</span>
+                <span class="title">Journal Replay: How the Disk Recovers After Power Loss</span>
+                <span class="status status-planned">PLANNED</span>
+            </div>
+            <div class="upcoming-item">
+                <span class="idx">08</span>
+                <span class="title">The Name-to-Number Dispatch Table (How the Kernel Supports Many Disk Formats)</span>
+                <span class="status status-planned">PLANNED</span>
+            </div>
+            <div class="upcoming-item">
+                <span class="idx">09</span>
+                <span class="title">open() Walks 7 Kernel Functions Before Returning a Small Integer</span>
+                <span class="status status-planned">PLANNED</span>
+            </div>
+            <div class="upcoming-item">
+                <span class="idx">10</span>
+                <span class="title">read() Copies 4096 Bytes From DRAM to Your Buffer (or Fetches From Disk First)</span>
+                <span class="status status-planned">PLANNED</span>
+            </div>
+            <div class="upcoming-item">
+                <span class="idx">11</span>
+                <span class="title">Unix V6: A Filesystem in 32-Byte Records and 512-Byte Blocks</span>
+                <span class="status status-planned">PLANNED</span>
+            </div>
+            <div class="upcoming-item">
+                <span class="idx">12</span>
+                <span class="title">Comparing Disk Formats: V6 vs ext2 vs ext4 — Same Ideas, Different Byte Counts</span>
+                <span class="status status-planned">PLANNED</span>
+            </div>
+        </div>
+    </div>
+</div>
+
+<footer>
+    Built by <a href="https://github.com/raikrahul">raikrahul</a> with <i class="fas fa-heart"></i> &middot;
+    Learning in public &middot; Show the bytes
+</footer>
+
+</body>
+</html>
